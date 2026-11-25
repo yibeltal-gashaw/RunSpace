@@ -11,30 +11,258 @@ html > body[data-scroll-locked] {
   --removed-body-scroll-bar-size: 0px !important;
 }
 
-/* Documentation link styling */
-article#nd-page a:not([data-card]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]) {
-  color: #2563eb;
+article#nd-page :is(h1, h2, h3, h4, h5, h6):not([class*="bg-fd-card"] h3) a,
+article#nd-page a[data-card],
+article#nd-page a[href^="#"],
+article#nd-page .group\/heading a,
+article#nd-page [class*="group/heading"] a {
+  color: inherit !important;
+  text-decoration: none !important;
+  font-weight: inherit;
+}
+
+article#nd-page :is(h1, h2, h3, h4, h5, h6):not([class*="bg-fd-card"] h3) a:hover,
+article#nd-page a[data-card]:hover,
+article#nd-page a[href^="#"]:hover,
+article#nd-page .group\/heading a:hover,
+article#nd-page [class*="group/heading"] a:hover {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+/* Prose, table, and list links in documentation (excludes headings, buttons, tabs) */
+article#nd-page a:not([data-card]):not([href^="#"]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]):not([role="tab"]) {
+  color: #21C45D;
   font-weight: 550;
   text-decoration: underline;
   text-underline-offset: 3.5px;
   text-decoration-thickness: 1.5px;
-  text-decoration-color: rgba(37, 99, 235, 0.4);
+  text-decoration-color: rgba(33, 196, 93, 0.4);
   transition: all 0.15s ease-in-out;
 }
 
-.dark article#nd-page a:not([data-card]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]) {
-  color: #38bdf8;
-  text-decoration-color: rgba(56, 189, 248, 0.45);
+.dark article#nd-page a:not([data-card]):not([href^="#"]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]):not([role="tab"]) {
+  color: #21C45D;
+  text-decoration-color: rgba(33, 196, 93, 0.45);
 }
 
-article#nd-page a:not([data-card]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]):hover {
-  color: #1d4ed8;
+article#nd-page a:not([data-card]):not([href^="#"]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]):not([role="tab"]):hover {
+  color: #16a34a;
   text-decoration-color: currentColor;
   text-underline-offset: 4.5px;
 }
 
-.dark article#nd-page a:not([data-card]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]):hover {
-  color: #7dd3fc;
+.dark article#nd-page a:not([data-card]):not([href^="#"]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]):not([role="tab"]):hover {
+  color: #4ade80;
   text-decoration-color: currentColor;
   text-underline-offset: 4.5px;
+}
+
+article#nd-page .bg-fd-card h3 a,
+article#nd-page [class*="bg-fd-card"] h3 a {
+  color: #21C45D !important;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease-in-out, text-decoration 0.15s ease-in-out;
+}
+
+article#nd-page .bg-fd-card h3 a:hover,
+article#nd-page [class*="bg-fd-card"] h3 a:hover {
+  color: #16a34a !important;
+  text-decoration: underline;
+}
+
+.dark article#nd-page .bg-fd-card h3 a:hover,
+.dark article#nd-page [class*="bg-fd-card"] h3 a:hover {
+  color: #4ade80 !important;
+  text-decoration: underline;
+}
+
+
+:root {
+  --color-runspace-active: #21C45D;
+}
+
+/* Active sidebar item */
+#nd-sidebar a[data-active="true"],
+aside#nd-sidebar a[data-active="true"],
+[data-sidebar-placeholder] a[data-active="true"],
+#nd-sidebar button[data-active="true"],
+aside#nd-sidebar button[data-active="true"] {
+  color: #21C45D !important;
+  background-color: rgba(33, 196, 93, 0.12) !important;
+  font-weight: 600;
+}
+
+/* Active sidebar item left indicator bar */
+#nd-sidebar a[data-active="true"]::before,
+aside#nd-sidebar a[data-active="true"]::before,
+[data-sidebar-placeholder] a[data-active="true"]::before,
+#nd-sidebar button[data-active="true"]::before,
+aside#nd-sidebar button[data-active="true"]::before {
+  background-color: #21C45D !important;
+}
+
+/* Active sidebar item icon */
+#nd-sidebar a[data-active="true"] svg,
+aside#nd-sidebar a[data-active="true"] svg,
+[data-sidebar-placeholder] a[data-active="true"] svg {
+  color: #21C45D !important;
+}
+
+#nd-sidebar a:not([data-active="true"]),
+aside#nd-sidebar a:not([data-active="true"]),
+#nd-sidebar a[data-active="false"],
+aside#nd-sidebar a[data-active="false"],
+[data-sidebar-placeholder] a:not([data-active="true"]) {
+  color: var(--color-fd-muted-foreground) !important;
+  background-color: transparent !important;
+  font-weight: normal !important;
+  text-decoration: none !important;
+}
+
+#nd-sidebar a:not([data-active="true"]):hover,
+aside#nd-sidebar a:not([data-active="true"]):hover,
+#nd-sidebar a[data-active="false"]:hover,
+aside#nd-sidebar a[data-active="false"]:hover,
+[data-sidebar-placeholder] a:not([data-active="true"]):hover {
+  color: var(--color-fd-accent-foreground) !important;
+  background-color: var(--color-fd-accent) !important;
+}
+
+/* Inactive sidebar link icons */
+#nd-sidebar a:not([data-active="true"]) svg,
+aside#nd-sidebar a:not([data-active="true"]) svg,
+#nd-sidebar a[data-active="false"] svg,
+aside#nd-sidebar a[data-active="false"] svg {
+  color: var(--color-fd-muted-foreground) !important;
+}
+
+#nd-sidebar button:not([data-active="true"]),
+aside#nd-sidebar button:not([data-active="true"]) {
+  color: var(--color-fd-muted-foreground) !important;
+  background-color: transparent !important;
+  font-weight: normal !important;
+}
+
+#nd-sidebar button:not([data-active="true"]):hover,
+aside#nd-sidebar button:not([data-active="true"]):hover {
+  color: var(--color-fd-accent-foreground) !important;
+  background-color: var(--color-fd-accent) !important;
+}
+
+#nd-sidebar button:not([data-active="true"]) svg,
+aside#nd-sidebar button:not([data-active="true"]) svg {
+  color: var(--color-fd-muted-foreground) !important;
+}
+
+
+/* Active tab components & triggers */
+[role="tab"][data-state="active"],
+button[role="tab"][data-state="active"],
+[role="tablist"] [role="tab"][data-state="active"],
+[role="tablist"] [role="tab"][aria-selected="true"],
+[role="tablist"] button[data-state="active"],
+.\[grid-area\:tabs\] a.border-fd-primary,
+.\[grid-area\:tabs\] a[data-active="true"],
+.\[grid-area\:tabs\] a[aria-selected="true"] {
+  color: #21C45D !important;
+  border-bottom-color: #21C45D !important;
+}
+
+[role="tab"][data-state="active"] svg,
+button[role="tab"][data-state="active"] svg,
+[role="tablist"] button[data-state="active"] svg {
+  color: #21C45D !important;
+}
+
+/* Inactive tabs - neutral and transparent border */
+[role="tab"]:not([data-state="active"]):not([aria-selected="true"]):not([data-active="true"]),
+button[role="tab"]:not([data-state="active"]):not([aria-selected="true"]):not([data-active="true"]),
+[role="tablist"] [role="tab"]:not([data-state="active"]):not([aria-selected="true"]):not([data-active="true"]),
+[role="tablist"] button:not([data-state="active"]):not([aria-selected="true"]):not([data-active="true"]),
+.\[grid-area\:tabs\] a:not(.border-fd-primary):not([data-active="true"]):not([aria-selected="true"]) {
+  color: var(--color-fd-muted-foreground) !important;
+  text-decoration: none !important;
+  border-bottom-color: transparent !important;
+  background-color: transparent !important;
+}
+
+
+/* Active TOC heading */
+#nd-toc a[data-active="true"] {
+  color: #21C45D !important;
+  font-weight: 500;
+}
+
+/* Inactive TOC headings are explicitly neutral */
+#nd-toc a:not([data-active="true"]),
+#nd-toc a[data-active="false"] {
+  color: var(--color-fd-muted-foreground) !important;
+  font-weight: normal !important;
+}
+
+#nd-toc a:not([data-active="true"]):hover,
+#nd-toc a[data-active="false"]:hover {
+  color: var(--color-fd-accent-foreground) !important;
+}
+
+/* Active indicator line & circle */
+#nd-toc path.stroke-fd-primary {
+  stroke: #21C45D !important;
+}
+
+#nd-toc circle.fill-fd-primary {
+  fill: #21C45D !important;
+}
+
+#nd-toc div.bg-fd-primary {
+  background-color: #21C45D !important;
+}
+
+
+[data-radix-popper-content-wrapper] a[data-active="true"],
+div[role="dialog"] a[data-active="true"] {
+  color: #21C45D !important;
+  background-color: rgba(33, 196, 93, 0.12) !important;
+  font-weight: 600;
+}
+
+[data-radix-popper-content-wrapper] a[data-active="true"] svg,
+div[role="dialog"] a[data-active="true"] svg,
+[data-radix-popper-content-wrapper] svg.text-fd-primary,
+div[role="dialog"] svg.text-fd-primary {
+  color: #21C45D !important;
+  stroke: #21C45D !important;
+}
+
+[data-radix-popper-content-wrapper] a:not([data-active="true"]),
+[data-radix-popper-content-wrapper] a[data-active="false"],
+div[role="dialog"] a:not([data-active="true"]),
+div[role="dialog"] a[data-active="false"] {
+  color: var(--color-fd-muted-foreground) !important;
+  background-color: transparent !important;
+  font-weight: normal !important;
+}
+
+[data-state="open"] aside a[data-active="true"],
+[data-state="open"] aside button[data-active="true"] {
+  color: #21C45D !important;
+  background-color: rgba(33, 196, 93, 0.12) !important;
+}
+
+[data-state="open"] aside a[data-active="true"]::before,
+[data-state="open"] aside button[data-active="true"]::before {
+  background-color: #21C45D !important;
+}
+
+[data-state="open"] aside a[data-active="true"] svg,
+[data-state="open"] aside button[data-active="true"] svg {
+  color: #21C45D !important;
+}
+
+[data-state="open"] aside a:not([data-active="true"]),
+[data-state="open"] aside a[data-active="false"] {
+  color: var(--color-fd-muted-foreground) !important;
+  background-color: transparent !important;
 }

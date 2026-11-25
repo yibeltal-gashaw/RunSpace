@@ -1,0 +1,68 @@
+---
+title: Triage & Incident Debugging
+description: Diagnose CrashLoopBackOff, OOMKilled, ImagePullBackOff, node pressures, and launch ephemeral debug containers.
+icon: TriangleExclamationPoint
+---
+
+Systematic troubleshooting procedures for resolving cluster incidents and container failure modes.
+
+---
+
+## 1. Diagnosing Common Pod Failures
+
+```bash title="Describe and Event Inspection"
+# Deep-inspect pod state, events, exit codes, and health check failures
+kubectl describe pod <pod-name>
+
+# Check chronological cluster events (newest first)
+kubectl get events -A --sort-by='.metadata.creationTimestamp'
+```
+
+### Common Exit Codes & Causes
+- **Exit Code 137 (`OOMKilled`):** Container exceeded memory limit defined in spec.
+  - Fix: Inspect `resources.limits.memory` and increase threshold.
+- **Exit Code 1 / 2:** Application crashed on startup (unhandled exception or missing env var).
+  - Fix: Check `kubectl logs <pod> --previous`.
+- **`ImagePullBackOff` / `ErrImagePull`:** Image name misspelled, tag missing, or private registry secret not mounted.
+  - Fix: Verify `imagePullSecrets` in deployment spec.
+- **`CreateContainerConfigError`:** Missing referenced Secret or ConfigMap.
+
+---
+
+## 2. Node Health & Resource Exhaustion
+
+```bash title="Node Diagnostics"
+# View node status, Kubernetes version, and OS
+kubectl get nodes -o wide
+
+# Check CPU and memory consumption per node (requires metrics-server)
+kubectl top nodes
+
+# Check CPU and memory consumption per pod
+kubectl top pods -A --sort-by=memory
+
+# Check node conditions for disk or memory pressure
+kubectl describe node <node-name> | grep -A 5 Conditions
+```
+
+---
+
+## 3. Ephemeral Debug Containers & `netshoot`
+
+When a distroless or minimal container lacks basic network tools (`curl`, `ping`, `nslookup`, `netstat`):
+
+```bash title="Network Debugging with Netshoot"
+# Spin up an interactive ephemeral network pod inside the cluster:
+kubectl run netshoot --rm -i --tty \
+  --image=nicolaka/netshoot -- /bin/bash
+
+# Inside the netshoot container, test DNS and connectivity:
+nslookup backend-service.default.svc.cluster.local
+nc -zv backend-service 8080
+curl -v http://backend-service:8080/health
+```
+
+```bash title="Attach Ephemeral Debug Container to Running Pod"
+# Attach a debug container into an existing pod's network and PID namespace
+kubectl debug -it <broken-pod> --image=busybox:latest --target=app-container
+```

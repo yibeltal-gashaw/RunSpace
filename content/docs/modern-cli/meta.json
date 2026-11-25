@@ -1,0 +1,9 @@
+{
+  "title": "Modern Unix CLI",
+  "pages": [
+    "index",
+    "---Tools---",
+    "search-navigation",
+    "file-inspection"
+  ]
+}

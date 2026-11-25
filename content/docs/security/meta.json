@@ -1,0 +1,9 @@
+{
+  "title": "Security & Secrets",
+  "pages": [
+    "index",
+    "---Audits---",
+    "certificates",
+    "secrets-scanning"
+  ]
+}

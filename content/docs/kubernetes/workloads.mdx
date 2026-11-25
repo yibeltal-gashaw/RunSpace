@@ -1,0 +1,91 @@
+---
+title: Pods & Workload Lifecycles
+description: Pod inspection, label selectors, multi-container logs, exec shell sessions, rollout controls, and resource scaling.
+icon: Box
+---
+
+Core commands for managing pods, deployments, statefulsets, and replica sets in Kubernetes clusters.
+
+---
+
+## 1. Querying & Filtering Pods
+
+```bash title="Pod List Queries"
+# List pods in default namespace with IPs and node names
+kubectl get pods -o wide
+
+# List pods across ALL namespaces
+kubectl get pods -A
+
+# Filter pods by label selector
+kubectl get pods -l app=api,tier=backend
+
+# Watch pod status changes in real time
+kubectl get pods -w
+
+# Sort pods by restart count to find unstable containers
+kubectl get pods --sort-by='.status.containerStatuses[0].restartCount'
+```
+
+---
+
+## 2. Streaming Container Logs
+
+```bash title="Log Operations"
+# Follow live logs of a specific pod
+kubectl logs -f <pod-name>
+
+# Tail the last 200 lines
+kubectl logs --tail=200 <pod-name>
+
+# Stream logs from ALL pods matching a label
+kubectl logs -f -l app=payment-service --max-log-requests=10
+
+# Stream logs from a specific container in a multi-container pod
+kubectl logs -f <pod-name> -c worker-container
+
+# View logs from a previous crashed container instance
+kubectl logs <pod-name> --previous
+```
+
+---
+
+## 3. Interactive Shell & Exec Sessions
+
+```bash title="Exec Commands"
+# Open interactive bash session inside pod
+kubectl exec -it <pod-name> -- /bin/bash
+
+# Target specific container in pod with sh
+kubectl exec -it <pod-name> -c sidecar-proxy -- /bin/sh
+
+# Run one-off command without interactive shell
+kubectl exec <pod-name> -- env | grep DATABASE
+```
+
+---
+
+## 4. Deployments, Rollouts & Scaling
+
+```bash title="Rollout Management"
+# Trigger rolling restart of a deployment (picks up new secrets/configs)
+kubectl rollout restart deployment/web-frontend
+
+# Check rollout progress
+kubectl rollout status deployment/web-frontend
+
+# View deployment revision history
+kubectl rollout history deployment/web-frontend
+
+# Roll back to the previous revision
+kubectl rollout undo deployment/web-frontend
+```
+
+```bash title="Scaling Replicas"
+# Scale deployment to 5 replicas
+kubectl scale deployment/web-frontend --replicas=5
+
+# Pause and resume deployment rollouts
+kubectl rollout pause deployment/web-frontend
+kubectl rollout resume deployment/web-frontend
+```

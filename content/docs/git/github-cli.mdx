@@ -1,0 +1,93 @@
+---
+title: GitHub CLI (`gh`)
+description: Terminal-first pull request lifecycle, code reviews, checks, GitHub Actions execution, and secrets management.
+icon: GitPullRequest
+---
+
+The official GitHub CLI (`gh`) brings pull requests, issues, repository settings, and GitHub Actions directly into your terminal.
+
+---
+
+## 1. Pull Request Workflow
+
+Create, view, and merge pull requests without switching to the browser:
+
+```bash title="Create Pull Requests"
+# Create a pull request interactively (prompts for title, body, reviewer)
+gh pr create
+
+# Create PR with inline title and body targeting main
+gh pr create --title "feat: add oauth2 provider" --body "Resolves #42" --base main
+
+# Open PR creation directly in the web browser
+gh pr create --web
+```
+
+```bash title="Inspect and Review PRs"
+# List open PRs assigned to you or requesting your review
+gh pr list --assignee "@me"
+
+# Checkout a pull request branch locally by number
+gh pr checkout 128
+
+# View the full git diff of a pull request
+gh pr diff 128
+
+# Check CI/CD status and check runs for current PR
+gh pr checks
+```
+
+```bash title="Merge and Close PRs"
+# Squash and merge the pull request and delete local/remote branch
+gh pr merge 128 --squash --delete-branch
+
+# Auto-merge when all required checks pass
+gh pr merge --auto --squash
+```
+
+---
+
+## 2. GitHub Actions & Workflow Triage
+
+Monitor CI/CD pipelines and view run logs directly in your shell:
+
+```bash title="View Workflow Runs"
+# List recent workflow runs on the current repository
+gh run list
+
+# View live log output of a specific workflow run
+gh run view <run-id> --log
+
+# Re-run failed jobs in a workflow
+gh run rerun <run-id> --failed
+```
+
+```bash title="Trigger Workflow Dispatches"
+# Trigger a workflow with workflow_dispatch event
+gh workflow run deploy.yml -f environment=staging -f ref=main
+```
+
+---
+
+## 3. Secrets & Repository Management
+
+Inspect and inject encrypted repository secrets for GitHub Actions:
+
+```bash title="Manage Secrets"
+# Set a repository secret from terminal input
+gh secret set DATABASE_URL
+
+# Set a secret from an environment file or string
+gh secret set API_KEY --body "sk_live_12345"
+
+# List configured secret names
+gh secret list
+```
+
+```bash title="Repository Cloning & Web Navigation"
+# Clone repository using GitHub shorthand
+gh repo clone owner/repository
+
+# Open current repository homepage in your default browser
+gh repo view --web
+```

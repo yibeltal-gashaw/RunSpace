@@ -1,0 +1,51 @@
+---
+title: Git & GitHub CLI Overview
+description: Operational reference for Git triage, commit recovery, interactive rebasing, repository hygiene, and terminal PR workflows.
+icon: GitBranch
+---
+
+Welcome to the **Git & GitHub CLI** reference hub for RunSpace. This section provides emergency triage one-liners, branch surgery workflows, repository sanitation recipes, and terminal-first GitHub PR commands.
+
+---
+
+## Sub-Modules
+
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/git/recovery">1. Emergency State Recovery</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Recover deleted branches, resurrect lost commits via reflog, undo accidental resets, and salvage stashes.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/git/branch-history">2. Branch History & Rebase</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Interactive squash, fixup commits, surgical cherry-picking, interactive staging, and regression isolation with bisect.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/git/clean-prune">3. Cleanup & Repository Hygiene</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Safely remove untracked files, prune stale remote references, audit repository disk usage, and manage submodules.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/git/github-cli">4. GitHub CLI (`gh`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Instant terminal PR creation, viewing diffs, checking CI run results, managing secrets, and downloading releases.</p>
+  </div>
+</div>
+
+---
+
+## Git Emergency Cheat Sheet
+
+| Incident / Symptom | Solution Command | What It Does |
+| :--- | :--- | :--- |
+| **Committed to wrong branch** | `git reset --soft HEAD~1` | Undoes the commit but leaves all modified files staged in index. |
+| **Accidental `git reset --hard`** | `git reflog` then `git reset --hard HEAD@{n}` | Rewinds working tree back to the recorded reflog position. |
+| **Forgot to add file to last commit** | `git add <file> && git commit --amend --no-edit` | Merges new change into the most recent commit without modifying message. |
+| **Need to discard all uncommitted changes** | `git restore . && git clean -fd` | Wipes modified tracked files and deletes untracked files/directories. |
+| **Deleted branch by mistake** | `git checkout -b <branch> <commit-hash-from-reflog>` | Recreates branch pointer at the commit hash prior to deletion. |
+| **Stash popped with conflicts or dropped** | `git fsck --lost-found \| grep commit` | Identifies orphaned commits including dropped stash objects. |

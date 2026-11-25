@@ -1,0 +1,111 @@
+---
+title: Emergency State Recovery & Reflog
+description: Resurrect lost commits, recover dropped stashes, reverse destructive resets, and fix detached HEAD states.
+icon: RotateCcw
+---
+
+Techniques and commands for rescuing repositories from destructive mistakes, lost work, or broken states.
+
+---
+
+## 1. The Git Safety Net: `reflog`
+
+Git records every single pointer change (commits, checkouts, rebases, merges, resets) in the reference log.
+
+```bash title="Inspect Pointer History"
+# Show last 30 actions on HEAD with step numbers
+git reflog
+
+# Show reflog with human timestamps and relative dates
+git reflog --date=relative
+
+# Show reflog for a specific branch
+git reflog show feature/payment-gateway
+```
+
+```bash title="Undo Destructive Operations"
+# Scenario: Ran 'git reset --hard HEAD~3' and lost 3 commits
+# Step 1: Find the hash immediately before the reset (e.g., HEAD@{1})
+git reflog
+
+# Step 2: Restore your working tree and branch pointer to that exact state
+git reset --hard HEAD@{1}
+```
+
+---
+
+## 2. Recovering Deleted Branches
+
+Deleting a branch with `git branch -D <name>` only deletes the reference pointer; the commits remain in the Git object database until garbage collection.
+
+```bash title="Recreate Deleted Branch"
+# 1. Locate the commit hash where the branch was pointing
+git reflog | grep "checkout: moving from <deleted-branch>"
+
+# 2. Re-create the branch from that exact commit hash
+git branch <deleted-branch> <commit-hash>
+
+# 3. Verify and checkout
+git checkout <deleted-branch>
+```
+
+---
+
+## 3. Undoing Commits & Preserving Work
+
+Choose the right reset mode depending on where you want your changes to land:
+
+```bash title="Reset Comparison"
+# --soft: Moves HEAD back, leaves all changes STAGED in index
+git reset --soft HEAD~1
+
+# --mixed (Default): Moves HEAD back, leaves all changes UNSTAGED in working directory
+git reset HEAD~1
+
+# --hard: Destroys commits AND working directory changes (Dangerous)
+git reset --hard HEAD~1
+```
+
+```bash title="Safe Undo for Shared/Pushed Commits"
+# Do NOT reset or rebase commits that have already been pushed to main!
+# Create a new inverse commit that cleanly cancels out the target commit:
+git revert <commit-hash>
+
+# Revert without prompting for commit message
+git revert --no-edit <commit-hash>
+
+# Revert a merge commit (specify parent 1 as mainline)
+git revert -m 1 <merge-commit-hash>
+```
+
+---
+
+## 4. Recover Lost or Dropped Stashes
+
+If you accidentally executed `git stash drop` or lost a stash during a conflict:
+
+```bash title="Find Orphaned Stash Commits"
+# List dangling commits in the object store
+git fsck --no-reflogs --lost-found | grep commit
+
+# Inspect the commit diff to verify it contains your stashed code
+git show <dangling-commit-hash>
+
+# Apply the recovered stash commit back to your working tree
+git stash apply <dangling-commit-hash>
+```
+
+---
+
+## 5. Detached HEAD Triage
+
+A detached HEAD occurs when checking out a specific commit, tag, or remote branch directly rather than a local tracking branch.
+
+```bash title="Save Work from Detached HEAD"
+# If you made commits in a detached HEAD state and want to keep them:
+# Create and switch to a new branch preserving current commits
+git switch -c rescue-detached-work
+
+# If you made NO commits and want to return to your previous branch:
+git switch -
+```

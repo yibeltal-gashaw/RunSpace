@@ -1,0 +1,45 @@
+---
+title: Kubernetes Operations & CLI Overview
+description: Operational reference for pod lifecycles, rollout restarts, CrashLoopBackOff diagnostics, port-forwarding, k9s, and Helm.
+icon: Layers
+---
+
+Welcome to the **Kubernetes** operational reference for RunSpace. This section delivers essential commands and triage workflows for managing containerized clusters, debugging container crashes, inspecting network ingress, and running interactive terminal dashboards.
+
+---
+
+## Sub-Modules
+
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/kubernetes/workloads">1. Pods & Workload Lifecycle</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Pod filtering, multi-container log streaming, interactive exec sessions, zero-downtime rollout restarts, and scaling replicas.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/kubernetes/troubleshooting">2. Triage & Incident Debugging</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Fixing CrashLoopBackOff and OOMKilled events, chronological cluster event sorting, and running ephemeral debug network pods.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/kubernetes/networking-config">3. Networking, Config & Tools</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Port-forwarding services, secret decoding, ConfigMap overrides, kubectx/kubens switching, k9s navigation, and Helm lifecycles.</p>
+  </div>
+</div>
+
+---
+
+## Emergency Kubernetes Triage Cheat Sheet
+
+| Symptom / Goal | Command | What It Does |
+| :--- | :--- | :--- |
+| **Check failing pods across cluster** | `kubectl get pods -A --field-selector=status.phase!=Running` | Lists all pods not currently in Running state across all namespaces. |
+| **Why is pod crashing?** | `kubectl logs <pod> --previous` | Prints log output from the previous crashed container instance. |
+| **Trigger zero-downtime reload** | `kubectl rollout restart deployment/<app>` | Gracefully restarts all pods in deployment one by one. |
+| **Forward cluster port to local** | `kubectl port-forward svc/<name> 8080:80` | Maps localhost port 8080 directly into cluster Service port 80. |
+| **Decode secret value** | `kubectl get secret <name> -o jsonpath="{.data.<key>}" \| base64 -d` | Extracts and decodes base64 secret key value directly to terminal. |
+| **Terminal UI Dashboard** | `k9s` | Launches instant, full-screen ncurses terminal cluster manager. |

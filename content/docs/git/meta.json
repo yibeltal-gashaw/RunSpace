@@ -1,0 +1,11 @@
+{
+  "title": "Git & GitHub CLI",
+  "pages": [
+    "index",
+    "---Workflows---",
+    "recovery",
+    "branch-history",
+    "clean-prune",
+    "github-cli"
+  ]
+}

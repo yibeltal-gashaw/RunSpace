@@ -1,0 +1,64 @@
+---
+title: SSL/TLS Certificates with `openssl`
+description: Inspect remote certificates, verify expiration dates, check SAN domains, and generate self-signed wildcard certificates.
+icon: Lock
+---
+
+Practical `openssl` recipes for diagnosing certificate validation issues and generating development TLS assets.
+
+---
+
+## 1. Inspecting Remote Certificates
+
+```bash title="Remote Certificate Auditing"
+# Check expiration dates without downloading the certificate manually
+openssl s_client -connect api.example.com:443 -servername api.example.com 2>/dev/null \
+  | openssl x509 -noout -dates
+
+# View Subject Alternative Name (SAN) domains covered by the cert
+openssl s_client -connect api.example.com:443 -servername api.example.com 2>/dev/null \
+  | openssl x509 -noout -ext subjectAltName
+
+# Inspect full certificate subject, issuer, and fingerprint
+openssl s_client -connect api.example.com:443 -servername api.example.com 2>/dev/null \
+  | openssl x509 -noout -issuer -subject -fingerprint -sha256
+```
+
+---
+
+## 2. Inspecting Local Certificate & Key Files
+
+```bash title="Decode Local Files"
+# Inspect a local .crt or .pem certificate
+openssl x509 -in cert.pem -text -noout
+
+# Verify that a private key matches a certificate (Hashes must match!)
+openssl x509 -noout -modulus -in server.crt | openssl md5
+openssl rsa -noout -modulus -in server.key | openssl md5
+
+# Verify private key passphrase and syntax
+openssl rsa -in server.key -check
+```
+
+---
+
+## 3. Generate Local Wildcard Certificates for Dev
+
+Generate a self-signed certificate supporting `localhost` and `*.localhost`:
+
+```bash title="Generate Development SSL Certificate"
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout dev-key.pem \
+  -out dev-cert.pem \
+  -subj "/C=US/ST=Dev/L=Local/O=DevApp/CN=localhost" \
+  -addext "subjectAltName=DNS:localhost,DNS:*.localhost,IP:127.0.0.1"
+```
+
+```bash title="Quick Local CA via mkcert"
+# For zero-warning HTTPS in local browsers, prefer mkcert:
+# Install local CA root into system trust store
+mkcert -install
+
+# Create certificate for localhost and custom dev domains
+mkcert localhost 127.0.0.1 dev.local "*.dev.local"
+```

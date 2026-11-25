@@ -1,0 +1,126 @@
+---
+title: Branch History, Rebase & Bisect
+description: Clean git history with interactive rebase, auto-squash fixups, surgical cherry-picking, and automated regression hunting.
+icon: GitCommitHorizontal
+---
+
+Workflows for crafting clean, reviewable commit histories before opening pull requests and hunting down regression bugs.
+
+---
+
+## 1. Interactive Rebase & History Rewriting
+
+Clean up messy local commits before pushing to code review.
+
+```bash title="Launch Interactive Rebase"
+# Rebase the last 4 commits on the current branch
+git rebase -i HEAD~4
+
+# Rebase against the updated main branch
+git fetch origin
+git rebase -i origin/main
+```
+
+Inside the interactive rebase editor:
+- `pick` : Keep the commit as-is.
+- `reword` : Keep commit contents, edit the message.
+- `edit` : Pause rebase to amend files or split the commit.
+- `squash` : Meld commit into the previous commit and concatenate messages.
+- `fixup` : Meld commit into the previous commit and discard this commit's message.
+- `drop` : Completely delete the commit.
+
+```bash title="Aborting or Resuming Rebase"
+# If rebase has conflicts and you want to abort safely:
+git rebase --abort
+
+# After resolving conflicts in files and staging with 'git add':
+git rebase --continue
+
+# Skip the conflicting commit entirely
+git rebase --skip
+```
+
+---
+
+## 2. Auto-Squash & Fixup Commits
+
+Fix earlier commits in a PR branch without manually opening interactive rebase:
+
+```bash title="Automated Fixups"
+# 1. Stage the typo fix or unit test correction
+git add src/auth/jwt.ts
+
+# 2. Commit as a targeted fixup referencing the original commit hash
+git commit --fixup <target-commit-hash>
+
+# 3. Automatically reorder and squash fixups into their targets without prompting
+git rebase -i --autosquash origin/main
+```
+
+---
+
+## 3. Surgical Cherry-Picking
+
+Apply specific commits or file patches across branches without merging whole branches:
+
+```bash title="Cherry-Pick Scenarios"
+# Apply a single commit to your current branch
+git cherry-pick <commit-hash>
+
+# Apply a commit without auto-committing (leaves changes staged)
+git cherry-pick -n <commit-hash>
+
+# Apply a sequence of commits (from A to B inclusive)
+git cherry-pick <commit-A>^..<commit-B>
+
+# Cherry-pick a single file from another branch directly
+git checkout <other-branch> -- path/to/file.ts
+```
+
+---
+
+## 4. Interactive Patch Staging (`git add -p`)
+
+Stage parts of modified files in small, logical chunks rather than committing everything at once:
+
+```bash title="Chunk-by-Chunk Staging"
+# Prompt interactive review for each hunk in working directory
+git add -p
+
+# Interactive options during review:
+# y - stage this hunk
+# n - do not stage this hunk
+# s - split this hunk into smaller hunks
+# e - manually edit the current hunk
+# q - quit interactive staging
+```
+
+---
+
+## 5. Automated Regression Hunting with `git bisect`
+
+Binary search your Git history to find the exact commit that introduced a bug:
+
+```bash title="Binary Search Workflow"
+# 1. Start bisect mode
+git bisect start
+
+# 2. Mark current state as broken
+git bisect bad
+
+# 3. Mark an older known-working commit or tag as good
+git bisect good v1.4.0
+
+# 4. Git checks out midpoint commit automatically. Test your app, then tag:
+git bisect good   # if test passes
+git bisect bad    # if bug is present
+
+# 5. When Git prints the offending commit hash, conclude and return to original branch:
+git bisect reset
+```
+
+```bash title="Automate Bisect with Test Script"
+# Run bisect automatically using a unit test or npm script:
+git bisect start HEAD v1.4.0
+git bisect run npm test
+```

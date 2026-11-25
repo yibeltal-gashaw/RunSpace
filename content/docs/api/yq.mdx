@@ -1,0 +1,77 @@
+---
+title: YAML Manipulation with `yq`
+description: In-place editing, querying Kubernetes manifests, Docker Compose stacks, and converting between YAML and JSON.
+icon: FileCode
+---
+
+`yq` is a portable command-line YAML, JSON, and XML processor powered by `jq`-like syntax.
+
+---
+
+## 1. Querying YAML Documents
+
+```bash title="Basic Navigation"
+# Extract value from YAML document
+yq '.version' docker-compose.yml
+
+# Extract nested property
+yq '.services.web.image' docker-compose.yml
+
+# List all service names in a Docker Compose file
+yq '.services | keys' docker-compose.yml
+
+# Query Kubernetes manifest by Kind
+yq 'select(.kind == "Deployment") | .metadata.name' k8s-manifest.yaml
+```
+
+---
+
+## 2. In-Place Updates (`-i`)
+
+Modify configuration files directly without destroying indentation or removing comments:
+
+```bash title="In-Place Edits"
+# Update an image tag in docker-compose.yml
+yq -i '.services.api.image = "ghcr.io/org/api:v2.1.0"' docker-compose.yml
+
+# Update environment variable in container spec
+yq -i '.services.api.environment.LOG_LEVEL = "debug"' docker-compose.yml
+
+# Add a new port mapping to an array
+yq -i '.services.web.ports += ["8080:80"]' docker-compose.yml
+
+# Delete a key from a YAML file
+yq -i 'del(.services.legacy-service)' docker-compose.yml
+```
+
+---
+
+## 3. Format Conversion (YAML ↔ JSON ↔ XML)
+
+```bash title="Cross-Format Piping"
+# Convert YAML to JSON
+yq -o=json docker-compose.yml
+
+# Convert JSON to YAML
+cat config.json | yq -P -o=yaml
+
+# Convert Kubernetes manifest to minified JSON for API submission
+yq -o=json deployment.yaml | jq -c .
+```
+
+---
+
+## 4. Multi-Document YAML Files
+
+Kubernetes manifests frequently concatenate multiple documents separated by `---`:
+
+```bash title="Multi-Document Queries"
+# Extract only Secret resources from a multi-document file
+yq 'select(.kind == "Secret")' all-resources.yaml
+
+# Extract all ConfigMap names
+yq 'select(.kind == "ConfigMap") | .metadata.name' all-resources.yaml
+
+# Update namespace across ALL documents in a single manifest
+yq -i '.metadata.namespace = "production"' all-resources.yaml
+```

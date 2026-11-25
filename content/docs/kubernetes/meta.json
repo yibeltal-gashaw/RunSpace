@@ -1,0 +1,10 @@
+{
+  "title": "Kubernetes",
+  "pages": [
+    "index",
+    "---Operations---",
+    "workloads",
+    "troubleshooting",
+    "networking-config"
+  ]
+}

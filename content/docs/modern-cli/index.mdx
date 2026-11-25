@@ -1,0 +1,41 @@
+---
+title: Modern Unix CLI Overview
+description: Blazing-fast, developer-first command-line alternatives built in Rust and Go to replace legacy GNU tools.
+icon: Sparkles
+---
+
+Welcome to the **Modern Unix CLI** reference hub for RunSpace. The developer command line has evolved with faster, safer, syntax-highlighted, and interactive tools that respect `.gitignore` and work seamlessly across Linux, macOS, and Windows.
+
+---
+
+## Classic Tools vs. Modern Replacements
+
+| Legacy GNU / POSIX Tool | Modern Rust/Go Replacement | Key Advantage | Command |
+| :--- | :--- | :--- | :--- |
+| `grep` | **ripgrep (`rg`)** | 10x faster, respects `.gitignore`, regex by default | `rg "pattern"` |
+| `find` | **fd (`fd`)** | Simple intuitive syntax, colorized, fast directory walk | `fd -e ts` |
+| `cat` | **bat (`bat`)** | Syntax highlighting, line numbers, git modifications | `bat app.ts` |
+| `ls` | **eza (`eza`)** | Git status, tree hierarchy view, file icons | `eza -la --git` |
+| `cd` | **zoxide (`z`)** | Smart directory jump learning from frecency | `z myproject` |
+| `du` | **dust / gdu** | Interactive visual bar charts of disk hogs | `dust` / `gdu` |
+| `top` / `htop` | **bottom (`btm`)** | Visual graphical CPU/RAM/process dashboard | `btm` |
+| *(none)* | **fzf (`fzf`)** | Universal interactive fuzzy filtering for any list | `history \| fzf` |
+
+---
+
+## Sub-Modules
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/modern-cli/search-navigation">1. Search & Navigation</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Lightning-fast text searches with ripgrep, intuitive file discovery with fd, interactive piping with fzf, and frecency directory jumping with zoxide.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/modern-cli/file-inspection">2. File & Resource Inspection</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Rich syntax-highlighted file pager with bat, tree directory listings with eza, interactive disk consumption with dust/gdu, and terminal resource monitoring with bottom.</p>
+  </div>
+</div>

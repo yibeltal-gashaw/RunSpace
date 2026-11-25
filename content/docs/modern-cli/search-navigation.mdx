@@ -1,0 +1,108 @@
+---
+title: Fast Search & Navigation (`rg`, `fd`, `fzf`, `z`)
+description: Supercharge code search, file traversal, fuzzy piping, and directory jumping with ripgrep, fd, fzf, and zoxide.
+icon: Search
+---
+
+Techniques and recipes for finding code, locating files, and jumping across directories at maximum speed.
+
+---
+
+## 1. Blazing Fast Code Search: `ripgrep` (`rg`)
+
+`ripgrep` is a line-oriented search tool that recursively searches the current directory for a regex pattern while respecting `.gitignore`.
+
+```bash title="Common ripgrep Workflows"
+# Search for pattern across all files (case-sensitive by default if pattern contains uppercase)
+rg "createContext"
+
+# Case-insensitive search (-i)
+rg -i "api_key"
+
+# Search only in specific file extensions / types (-t)
+rg -t ts -t tsx "useState"
+rg -t rust "fn main"
+
+# Invert search (find files NOT containing pattern)
+rg -t json -v "version"
+
+# Multiline regex search (-U / --multiline)
+rg -U "try \{\n\s+await"
+
+# Search hidden files and ignored files as well (-u / -uu)
+rg -uu "DATABASE_URL"
+```
+
+```bash title="Search & Replace with ripgrep"
+# Preview replacements across whole codebase
+rg "oldEndpoint" --replace "newEndpoint"
+
+# Replace across files using sed or sd combination
+rg -l "oldEndpoint" | xargs sed -i 's/oldEndpoint/newEndpoint/g'
+```
+
+---
+
+## 2. Intuitive File Discovery: `fd`
+
+`fd` is a simple, fast, and user-friendly alternative to `find`.
+
+```bash title="fd Commands"
+# Find all files containing "config" in their name
+fd config
+
+# Find all files with specific extension
+fd -e mdx
+fd -e json -e yaml
+
+# Find files in a specific directory
+fd -e ts . src/components
+
+# Include hidden and ignored files (-H / -I)
+fd -H ".env"
+
+# Execute a command on every matching file (-x / --exec)
+fd -e bak -x rm -v {}
+fd -e png -x optipng {}
+```
+
+---
+
+## 3. Interactive Fuzzy Finder: `fzf`
+
+`fzf` acts as an interactive fuzzy filter that can be attached to any command pipeline.
+
+```bash title="Interactive Pipelines"
+# Fuzzy search shell history
+history | fzf
+
+# Interactive file preview and opening in editor
+nvim $(fzf --preview 'bat --style=numbers --color=always {}')
+
+# Interactive Git Branch Checkout
+git checkout $(git branch -a | tr -d ' *' | fzf)
+
+# Interactive Process Killer
+kill -9 $(ps -ef | fzf | awk '{print $2}')
+
+# Interactive Docker Container Triage
+docker stop $(docker ps | fzf | awk '{print $1}')
+```
+
+---
+
+## 4. Smarter Directory Jumping: `zoxide` (`z`)
+
+`zoxide` remembers the directories you use most frequently and lets you jump to them with minimal keystrokes.
+
+```bash title="zoxide Usage"
+# Jump to a directory matching keyword
+z runspace
+z docs
+
+# Jump to nested path matching multiple words
+z run content
+
+# Open interactive fuzzy selection when multiple paths match
+z -i api
+```

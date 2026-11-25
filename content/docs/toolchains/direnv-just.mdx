@@ -1,0 +1,72 @@
+---
+title: Scoped Environments & Task Runners (`direnv`, `just`)
+description: Auto-load project environment variables with direnv, and write clean, reproducible task recipes using just.
+icon: Play
+---
+
+Techniques for keeping project environments isolated, secrets automated, and developer onboarding friction-free.
+
+---
+
+## 1. Directory-Scoped Variables: `direnv`
+
+`direnv` hooks into your shell to automatically export environment variables when entering a directory and unsets them upon leaving:
+
+```bash title="direnv Quickstart"
+# Create a local environment definition file in project root
+echo 'export DATABASE_URL="postgres://localhost:5432/my_dev_db"' >> .envrc
+echo 'export API_SECRET="local-dev-secret-key"' >> .envrc
+
+# Authorize the .envrc file (required whenever the file changes)
+direnv allow
+
+# Automatically load standard .env files if present:
+# Add this single line inside .envrc:
+# dotenv
+```
+
+---
+
+## 2. Modern Project Task Runner: `just`
+
+`just` is a modern, developer-friendly command runner inspired by `make`, without Make's tab quirks, arcane syntax, or silent failures.
+
+Create a `justfile` in your repository root:
+
+```just title="justfile"
+# Default recipe executed when running 'just'
+default:
+    @just --list
+
+# Start development servers
+dev:
+    pnpm dev
+
+# Run all unit and integration tests
+test:
+    pnpm test
+
+# Build production bundles
+build:
+    pnpm build
+
+# Spin up database and local services
+up:
+    docker compose up -d
+    @echo "Services running at localhost:5432 and localhost:6379"
+
+# Clean build artifacts
+clean:
+    rm -rf dist node_modules/.cache
+```
+
+```bash title="Running Recipes"
+# Run dev recipe
+just dev
+
+# Run tests
+just test
+
+# Pass arguments to a recipe
+just deploy staging
+```

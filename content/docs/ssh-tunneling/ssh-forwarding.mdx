@@ -1,0 +1,90 @@
+---
+title: SSH Port Forwarding & Config Mastery
+description: Local (-L), Remote (-R), and Dynamic (-D) tunnels, bastion ProxyJump configurations, and connection multiplexing.
+icon: Terminal
+---
+
+Commands and configuration patterns for managing encrypted SSH tunnels and multi-hop infrastructure connections.
+
+---
+
+## 1. Local Port Forwarding (`-L`)
+
+Map a port on your local machine to a service accessible only from the remote SSH server (e.g. private database):
+
+```bash title="Local Port Forwarding"
+# Syntax: ssh -L <local_port>:<remote_target_host>:<remote_target_port> <user>@<ssh_host>
+
+# Access private PostgreSQL on remote server via local localhost:5433
+ssh -L 5433:127.0.0.1:5432 user@bastion-host
+
+# Run in background without opening interactive shell (-N: no command, -f: background)
+ssh -N -f -L 5433:127.0.0.1:5432 user@bastion-host
+
+# Forward to an internal private VPC address accessible by bastion
+ssh -L 6379:redis-internal.vpc:6379 user@bastion-host
+```
+
+---
+
+## 2. Remote / Reverse Port Forwarding (`-R`)
+
+Allow a remote server to access a service running on your local development machine:
+
+```bash title="Remote Port Forwarding"
+# Syntax: ssh -R <remote_port>:<local_host>:<local_port> <user>@<remote_host>
+
+# Expose local dev server (port 3000) on remote server's port 8080
+ssh -R 8080:localhost:3000 user@remote-vps.com
+
+# Allow external traffic to connect to remote forwarded port (Requires GatewayPorts yes on remote)
+ssh -R 0.0.0.0:8080:localhost:3000 user@remote-vps.com
+```
+
+---
+
+## 3. Dynamic Port Forwarding (SOCKS5 Proxy `-D`)
+
+Turn your SSH connection into an encrypted SOCKS5 proxy to route web traffic through remote server:
+
+```bash title="SOCKS5 Proxy"
+# Create SOCKS proxy on localhost:1080
+ssh -D 1080 -N -C user@remote-vps.com
+
+# Route curl requests through the SOCKS proxy
+curl --socks5-hostname localhost:1080 https://checkip.amazonaws.com
+```
+
+---
+
+## 4. SSH Configuration File (`~/.ssh/config`)
+
+Automate keys, users, ports, and bastion jumps in your local configuration:
+
+```text title="~/.ssh/config"
+# Persistent connection multiplexing (makes subsequent connections instant)
+Host *
+    ControlMaster auto
+    ControlPath ~/.ssh/sockets/%r@%h-%p
+    ControlPersist 10m
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+# Bastion / Jump Host definition
+Host bastion
+    HostName bastion.production.corp
+    User ops
+    IdentityFile ~/.ssh/id_ed25519
+
+# Internal Target Host (automatically routes through bastion)
+Host internal-db
+    HostName 10.0.2.45
+    User postgres
+    ProxyJump bastion
+    IdentityFile ~/.ssh/id_ed25519
+```
+
+```bash title="Connect Using Aliases"
+# Connects directly through bastion in one single hop
+ssh internal-db
+```

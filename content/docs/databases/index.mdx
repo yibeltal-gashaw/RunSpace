@@ -1,0 +1,45 @@
+---
+title: Database & Cache CLI Overview
+description: Operational reference for terminal-first database querying, connection inspection, locking triage, and cache monitoring without heavy GUI tools.
+icon: Database
+---
+
+Welcome to the **Databases & Caches** operational reference for RunSpace. This section provides commands and one-liners for inspecting live database states, diagnosing deadlocks, safely scanning cache keys, and exporting snapshots directly from the command line or container exec sessions.
+
+---
+
+## Sub-Modules
+
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/databases/redis">1. Redis CLI (`redis-cli`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Safe non-blocking SCAN queries, inspecting key TTLs, real-time command streaming with MONITOR, and memory consumption audits.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/databases/postgres">2. PostgreSQL CLI (`psql`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">One-liner SQL queries, listing active connections, terminating blocked queries, table and index sizing, and pg_dump backups.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/databases/sqlite">3. SQLite CLI (`sqlite3`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Inspecting local SQLite app files, schema extraction, column formatting modes, database vacuuming, and CSV exports.</p>
+  </div>
+</div>
+
+---
+
+## Database Rapid Triage Cheat Sheet
+
+| Task | Command | Target Engine |
+| :--- | :--- | :--- |
+| **Stream Live Redis Operations** | `redis-cli monitor` | Redis |
+| **Safe Key Search without Locking** | `redis-cli --scan --pattern "session:*"` | Redis |
+| **Inspect Active Postgres Queries** | `psql -c "SELECT pid, query, state FROM pg_stat_activity WHERE state != 'idle';"` | PostgreSQL |
+| **Kill Hanging Postgres Query** | `psql -c "SELECT pg_cancel_backend(<pid>);"` | PostgreSQL |
+| **Check Largest Postgres Tables** | `psql -c "SELECT relname, pg_size_pretty(pg_total_relation_size(relid)) FROM pg_catalog.pg_statio_user_tables ORDER BY pg_total_relation_size(relid) DESC LIMIT 10;"` | PostgreSQL |
+| **Inspect SQLite Schema** | `sqlite3 app.db ".schema"` | SQLite |

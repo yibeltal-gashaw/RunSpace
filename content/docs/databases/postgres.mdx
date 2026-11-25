@@ -1,0 +1,88 @@
+---
+title: PostgreSQL CLI (`psql`)
+description: Direct query execution, active connection audits, terminating hung queries, table size metrics, and backups with pg_dump.
+icon: Database
+---
+
+Fast terminal workflows for PostgreSQL administration, performance troubleshooting, and database snapshots.
+
+---
+
+## 1. Quick Terminal Execution (`-c`)
+
+Run SQL commands without entering an interactive `psql` session:
+
+```bash title="One-Liner SQL Queries"
+# Execute query and format output cleanly
+psql -h localhost -U postgres -d my_database -c "SELECT count(*) FROM users;"
+
+# Output query result as unaligned CSV
+psql -d my_database -A -F "," -c "SELECT id, email, created_at FROM users LIMIT 10;"
+
+# Execute SQL commands from a file
+psql -d my_database -f migrations/001_initial.sql
+```
+
+---
+
+## 2. Active Query & Lock Triage
+
+Diagnose slow transactions, hung locks, and long-running queries:
+
+```bash title="Inspect Active Connections"
+# List all actively executing queries (excluding idle connections)
+psql -d my_database -c "
+SELECT pid, now() - query_start AS duration, query, state 
+FROM pg_stat_activity 
+WHERE state != 'idle' 
+ORDER BY duration DESC;
+"
+```
+
+```bash title="Terminate Hung or Blocking Queries"
+# Gracefully cancel query (SIGINT to backend)
+psql -d my_database -c "SELECT pg_cancel_backend(12345);"
+
+# Forcefully kill backend connection (SIGTERM)
+psql -d my_database -c "SELECT pg_terminate_backend(12345);"
+
+# Terminate ALL idle connections currently open
+psql -d my_database -c "
+SELECT pg_terminate_backend(pid) 
+FROM pg_stat_activity 
+WHERE state = 'idle' AND pid <> pg_backend_pid();
+"
+```
+
+---
+
+## 3. Disk Consumption & Table Sizes
+
+```bash title="Storage Metrics"
+# List top 10 largest tables including indexes
+psql -d my_database -c "
+SELECT relname AS table_name,
+       pg_size_pretty(pg_total_relation_size(relid)) AS total_size
+FROM pg_catalog.pg_statio_user_tables
+ORDER BY pg_total_relation_size(relid) DESC
+LIMIT 10;
+"
+
+# Check database total size
+psql -d my_database -c "SELECT pg_size_pretty(pg_database_size('my_database'));"
+```
+
+---
+
+## 4. Database Dump & Restore (`pg_dump`)
+
+```bash title="Backup and Restore"
+# Dump database in compressed custom format (-Fc)
+pg_dump -U postgres -d my_database -Fc -f backup_$(date +%Y%m%d).dump
+
+# Dump schema only (no table data)
+pg_dump -U postgres -d my_database --schema-only > schema.sql
+
+# Restore custom format backup using multiple parallel workers
+pg_restore -U postgres -d my_database -j 4 backup_20261125.dump
+```

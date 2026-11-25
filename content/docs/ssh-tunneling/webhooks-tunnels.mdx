@@ -1,0 +1,58 @@
+---
+title: Webhook & Public Dev Tunnels
+description: Securely expose local servers to external webhooks and mobile devices using Cloudflare Tunnels, ngrok, and localtunnel.
+icon: Share2
+---
+
+Techniques for receiving third-party webhooks (Stripe, GitHub, Twilio, OAuth redirects) on your local development machine.
+
+---
+
+## 1. Cloudflare Tunnels (`cloudflared`)
+
+The fastest, free, and firewall-friendly tunnel. No public IP or port forwarding required:
+
+```bash title="Quick Ad-Hoc Public Tunnel"
+# Expose local port 3000 to a free, temporary *.trycloudflare.com HTTPS URL
+cloudflared tunnel --url http://localhost:3000
+
+# Expose local port with custom header bypass
+cloudflared tunnel --url http://localhost:8080 --no-tls-verify
+```
+
+---
+
+## 2. ngrok
+
+The industry standard for HTTP, TCP, and TLS tunneling with a built-in web request inspection dashboard:
+
+```bash title="ngrok Workflows"
+# Expose local HTTP port 3000
+ngrok http 3000
+
+# Expose with custom static domain (configured in ngrok dashboard)
+ngrok http --domain=api.mydev.ngrok-free.app 3000
+
+# Inspect incoming requests and replay webhooks
+# Open local inspector web UI in browser:
+# http://127.0.0.1:4040
+```
+
+```bash title="Raw TCP Tunneling (Databases / SSH)"
+# Expose local PostgreSQL database (port 5432) over public TCP
+ngrok tcp 5432
+```
+
+---
+
+## 3. Lightweight Open-Source Tunnel: `localtunnel`
+
+Zero-install via `npx` when no binaries are pre-installed:
+
+```bash title="Quick localtunnel Execution"
+# Start tunnel directly without permanent installation
+npx localtunnel --port 3000
+
+# Request specific subdomain
+npx localtunnel --port 3000 --subdomain myapp-webhook-dev
+```

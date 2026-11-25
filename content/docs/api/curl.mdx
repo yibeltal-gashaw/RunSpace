@@ -1,0 +1,98 @@
+---
+title: Advanced `curl` Diagnostics
+description: HTTP latency profiling, header inspection, multipart uploads, authentication handling, and TLS debugging with curl.
+icon: Terminal
+---
+
+Battle-tested `curl` commands for backend developers, microservices communication, and infrastructure latency audits.
+
+---
+
+## 1. Latency & Performance Profiling
+
+Measure network time consumption: DNS resolution, TCP connection, TLS handshake, Time to First Byte (TTFB), and transfer speed.
+
+Create a formatting template `curl-format.txt`:
+
+```text title="curl-format.txt"
+\n
+       time_namelookup:  %{time_namelookup}s\n
+          time_connect:  %{time_connect}s\n
+       time_appconnect:  %{time_appconnect}s\n
+      time_pretransfer:  %{time_pretransfer}s\n
+         time_redirect:  %{time_redirect}s\n
+    time_starttransfer:  %{time_starttransfer}s\n
+                       ----------\n
+            time_total:  %{time_total}s\n
+           speed_speed:  %{speed_download} bytes/sec\n
+          http_code:     %{http_code}\n
+\n
+```
+
+```bash title="Execute Latency Benchmark"
+# Run benchmark discarding the response body:
+curl -w "@curl-format.txt" -o /dev/null -s https://api.example.com/v1/health
+
+# One-liner to extract pure Time to First Byte (TTFB):
+curl -s -o /dev/null -w "TTFB: %{time_starttransfer}s | Total: %{time_total}s\n" https://api.example.com/v1/users
+```
+
+---
+
+## 2. Common REST Verbs & Payloads
+
+```bash title="POST JSON Payload"
+curl -X POST https://api.example.com/v1/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"name": "Alice", "role": "admin"}'
+```
+
+```bash title="PUT / PATCH Updates"
+curl -X PATCH https://api.example.com/v1/users/42 \
+  -H "Content-Type: application/json" \
+  -d '{"status": "active"}'
+```
+
+```bash title="Multipart Form & File Upload"
+# Send file with form field (equivalent to HTML file input)
+curl -X POST https://api.example.com/v1/uploads \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -F "file=@/path/to/archive.tar.gz" \
+  -F "category=backups"
+```
+
+---
+
+## 3. Headers, Redirects & Inspecting Responses
+
+```bash title="Header Operations"
+# View response headers ONLY (-I / --head)
+curl -sI https://api.example.com
+
+# Print both response headers AND response body (-i)
+curl -si https://api.example.com/health
+
+# Follow HTTP 301/302 redirects automatically (-L)
+curl -sL https://example.com
+
+# Silent mode with error failure (-f: returns non-zero exit code on HTTP 4xx/5xx)
+curl -fsS https://api.example.com/health
+```
+
+---
+
+## 4. SSL/TLS & Network Debugging
+
+```bash title="Bypass or Debug SSL"
+# Insecure mode: ignore self-signed certificates (Development only)
+curl -k https://localhost:8443
+
+# Force specific HTTP protocol version
+curl --http1.1 https://api.example.com
+curl --http2 https://api.example.com
+curl --http3 https://api.example.com
+
+# Resolve custom IP directly without touching /etc/hosts or DNS
+curl --resolve "api.example.com:443:127.0.0.1" https://api.example.com/status
+```

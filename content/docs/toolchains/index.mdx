@@ -1,0 +1,36 @@
+---
+title: Toolchains & Task Runners Overview
+description: Operational reference for polyglot runtime versioning with mise/asdf, automated per-directory environment variables with direnv, and task execution with just.
+icon: Wrench
+---
+
+Welcome to the **Toolchains & Task Runners** reference hub for RunSpace. This section documents how modern developers eliminate runtime version conflicts across polyglot repositories, automate project-level secrets loading without global pollution, and write clean, standardized task automation recipes.
+
+---
+
+## Toolchain Quick Comparison
+
+| Tool | Purpose | Replaces / Improves | Config File |
+| :--- | :--- | :--- | :--- |
+| **mise** (or **asdf**) | Unified polyglot runtime manager | `nvm`, `pyenv`, `rbenv`, `gvm`, `sdkman` | `.mise.toml` / `.tool-versions` |
+| **direnv** | Automatic directory-scoped env variables | Manual `export`, sourcing `.env` scripts | `.envrc` |
+| **just** | Modern command runner for project recipes | `make`, `npm run`, messy bash scripts | `justfile` |
+
+---
+
+## Sub-Modules
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/toolchains/mise-asdf">1. Polyglot Versioning (`mise` / `asdf`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Manage Node.js, Python, Go, Rust, Java, and CLI tool versions through a single configuration file.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/toolchains/direnv-just">2. Scoped Environments & Task Runners (`direnv`, `just`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Auto-load `.envrc` when entering project folders, and write cross-platform project tasks with clean justfiles.</p>
+  </div>
+</div>

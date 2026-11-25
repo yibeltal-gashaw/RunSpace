@@ -1,10 +1,10 @@
 ---
-title: Developer Command Dashboard
+title: Developer Platform
 description: Instant reference, copyable infrastructure commands, and container operation workflows.
 icon: LayoutDashboard
 ---
 
-Welcome to **RunSpace**, your fast personal developer dashboard engineered for immediate access to daily operational workflows, container commands, VPN mesh routing, and system utilities.
+Welcome to **RunSpace**, your fast personal developer dashboard engineered for immediate access to daily operational workflows, Git recovery, API debugging, modern Unix CLIs, container operations, database triage, and system utilities.
 
 ---
 
@@ -25,15 +25,40 @@ The global search bar at the top acts as an omni-router. Use prefix shortcuts to
 
 Jump directly into a category to view verified CLI snippets:
 
+### Developer Core & Toolchains
+
+| Category | Description | Sub-sections | Link |
+| :--- | :--- | :--- | :--- |
+| **Git & GitHub CLI** | Reflog state recovery, interactive rebase, autosquash, hygiene & `gh` PRs | `recovery`, `branch-history`, `clean-prune`, `github-cli` | [Git Docs](/docs/git) |
+| **API & Data Wrangling** | Latency profiling with curl, JSON wrangling with jq, in-place YAML with yq & httpie | `curl`, `jq`, `yq`, `httpie` | [API Docs](/docs/api) |
+| **Modern Unix CLI** | Fast Rust/Go alternatives: ripgrep, fd, fzf, zoxide, bat, eza, dust & bottom | `search-navigation`, `file-inspection` | [Modern CLI Docs](/docs/modern-cli) |
+| **Toolchains & Runners** | Polyglot runtime management with mise/asdf, direnv scopes & just task recipes | `mise-asdf`, `direnv-just` | [Toolchains Docs](/docs/toolchains) |
+
+### Containers & Cloud
+
 | Category | Description | Sub-sections | Link |
 | :--- | :--- | :--- | :--- |
 | **Docker** | Container lifecycle, live logs, compose stacks, and cleanup | `installation`, `logs`, `deployment` | [Docker Docs](/docs/docker) |
 | **Portainer** | UI management, edge agents, volume snapshots & admin recovery | `deployment`, `maintenance`, `security` | [Portainer Docs](/docs/portainer) |
+| **Kubernetes** | Pod triage, CrashLoopBackOff/OOMKilled diagnostics, port forwarding, k9s & Helm | `workloads`, `troubleshooting`, `networking-config` | [Kubernetes Docs](/docs/kubernetes) |
+| **WSO2 Carbon** | Enterprise middleware logs, correlation ID tracing & real-time tailing | `logs`, `log-management`, `specialized-logs` | [WSO2 Docs](/docs/wso2) |
+
+### Databases, Network & Security
+
+| Category | Description | Sub-sections | Link |
+| :--- | :--- | :--- | :--- |
+| **Databases & Caches** | Redis non-blocking SCAN/MONITOR, psql lock kills & query metrics, sqlite3 formatting | `redis`, `postgres`, `sqlite` | [Databases Docs](/docs/databases) |
 | **Network & Tailscale** | Mesh VPN routing, exit node advertisement, and port probing | `vpn`, `diagnostics` | [Network Docs](/docs/network) |
-| **System / Windows** | WSL instance control, winget batch upgrades, and process kills | `wsl`, `system-utils` | [System Docs](/docs/system) |
+| **SSH & Tunneling** | Local/remote port forwarding, bastion ProxyJump, cloudflared & ngrok tunnels | `ssh-forwarding`, `webhooks-tunnels` | [SSH Docs](/docs/ssh-tunneling) |
+| **Security & Secrets** | Remote SSL expiration with openssl, dev wildcards, gitleaks auditing & trivy scans | `certificates`, `secrets-scanning` | [Security Docs](/docs/security) |
+
+### Operating Systems & Scripts
+
+| Category | Description | Sub-sections | Link |
+| :--- | :--- | :--- | :--- |
 | **Linux CLI** | Essential operational commands: resources, processes, search, networking & security | `system-resources`, `process-management`, `filesystem-search`, `network-troubleshooting`, `text-processing`, `users-security` | [Linux Docs](/docs/linux) |
 | **PowerShell** | Essential developer commands: port hunting, REST APIs, grep & env debugging | `port-hunting`, `network-testing`, `debugging`, `environment-variables`, `filesystem` | [PowerShell Docs](/docs/powershell) |
-| **WSO2 Carbon** | Enterprise middleware logs, correlation ID tracing & real-time tailing | `logs` | [WSO2 Docs](/docs/wso2) |
+| **System / Windows** | WSL instance control, winget batch upgrades, and process kills | `wsl`, `system-utils` | [System Docs](/docs/system) |
 
 ---
 
@@ -44,3 +69,5 @@ Quick reference for common developer service endpoints:
 - **Portainer Web UI:** [http://localhost:9000](http://localhost:9000) or [https://localhost:9443](https://localhost:9443)
 - **Local Application Server:** [http://localhost:3000](http://localhost:3000)
 - **Edge Node Agent:** `port 9001`
+- **Local PostgreSQL:** `port 5432`
+- **Local Redis Cache:** `port 6379`

@@ -1,0 +1,92 @@
+---
+title: JSON Processing with `jq`
+description: Stream, parse, filter, and reshape complex JSON payloads, arrays, and log objects using jq.
+icon: Braces
+---
+
+The quintessential command-line JSON processor. `jq` lets you extract nested values, filter arrays, and transform payloads on the fly.
+
+---
+
+## 1. Basic Navigation & Field Extraction
+
+```bash title="Extracting Fields"
+# Pretty-print JSON
+cat data.json | jq .
+
+# Extract top-level key
+echo '{"status": "ok", "code": 200}' | jq '.status'
+# Output: "ok"
+
+# Extract raw string value without quotes (-r flag)
+echo '{"status": "ok", "code": 200}' | jq -r '.status'
+# Output: ok
+
+# Extract nested key
+echo '{"data": {"user": {"id": "usr_99"}}}' | jq -r '.data.user.id'
+# Output: usr_99
+```
+
+---
+
+## 2. Array Operations & Filtering
+
+```bash title="Array Selectors"
+# Unroll array elements
+echo '["docker", "kubernetes", "linux"]' | jq -r '.[]'
+
+# Select first item
+echo '["first", "second", "third"]' | jq -r '.[0]'
+
+# Slice array (first 2 items)
+echo '[1, 2, 3, 4, 5]' | jq '.[0:2]'
+
+# Count number of items in array
+echo '[{"id": 1}, {"id": 2}]' | jq 'length'
+```
+
+```bash title="Filter by Condition (select)"
+# Filter elements where status is "ERROR"
+cat logs.json | jq '.[] | select(.level == "ERROR")'
+
+# Filter objects matching numeric threshold
+cat metrics.json | jq '.servers[] | select(.cpu_usage > 85)'
+
+# Filter strings containing substring (test with regex)
+cat users.json | jq '.[] | select(.email | test("@corp\\.com$"))'
+```
+
+---
+
+## 3. Reshaping & Projection
+
+```bash title="Transform Objects"
+# Extract only specific fields into a new object structure
+cat users.json | jq '.[] | {userId: .id, email: .email, active: .is_active}'
+
+# Map an array of objects to an array of scalar IDs
+cat users.json | jq '[.[] | .id]'
+```
+
+```bash title="Convert JSON to CSV / TSV"
+# Convert array of user objects to CSV format
+cat users.json | jq -r '.[] | [.id, .name, .email] | @csv'
+
+# Convert array of objects to Tab-Separated Values (TSV)
+cat users.json | jq -r '.[] | [.id, .status, .created_at] | @tsv'
+```
+
+---
+
+## 4. Useful Real-World Pipelines
+
+```bash title="Practical Recipes"
+# Extract all listening container names and ports from docker inspect
+docker inspect $(docker ps -q) | jq -r '.[] | "\(.Name): \(.NetworkSettings.Ports)"'
+
+# Parse and count HTTP status code distribution from JSON access logs
+cat access.log.json | jq -r '.status' | sort | uniq -c | sort -nr
+
+# Find total memory sum across a JSON cluster response
+cat nodes.json | jq '[.nodes[].memory_gb] | add'
+```

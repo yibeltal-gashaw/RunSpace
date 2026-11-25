@@ -1,0 +1,11 @@
+{
+  "title": "API & Data Wrangling",
+  "pages": [
+    "index",
+    "---Tools---",
+    "curl",
+    "jq",
+    "yq",
+    "httpie"
+  ]
+}

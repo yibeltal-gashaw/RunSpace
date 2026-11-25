@@ -1,0 +1,107 @@
+---
+title: Networking, Config & Tools
+description: Service port forwarding, secret decoding, ConfigMaps, context switching with kubectx, k9s, and Helm.
+icon: Network
+---
+
+Operational utilities for connecting local development environments to Kubernetes clusters and streamlining administrative workflows.
+
+---
+
+## 1. Port Forwarding to Localhost
+
+Access internal cluster services, databases, and monitoring dashboards locally without creating Ingresses or LoadBalancers:
+
+```bash title="Port Forwarding"
+# Forward local port 8080 to a Service port 80
+kubectl port-forward svc/web-service 8080:80
+
+# Forward local port 5432 to a PostgreSQL Pod
+kubectl port-forward pod/postgres-0 5432:5432
+
+# Bind port-forward to all local interfaces (allows access from other LAN devices)
+kubectl port-forward --address 0.0.0.0 svc/redis-master 6379:6379
+```
+
+---
+
+## 2. Secrets & ConfigMaps
+
+```bash title="ConfigMaps"
+# Create ConfigMap from a local environment file
+kubectl create configmap app-config --from-env-file=.env.production
+
+# View all key-values inside a ConfigMap
+kubectl get configmap app-config -o yaml
+```
+
+```bash title="Secrets Decoding"
+# Decode a specific secret key directly to terminal
+kubectl get secret database-credentials \
+  -o jsonpath="{.data.password}" | base64 --decode; echo
+
+# Extract all keys in a secret decoded
+kubectl get secret app-secrets -o json \
+  | jq '.data | map_values(@base64d)'
+```
+
+---
+
+## 3. Context & Namespace Switching (`kubectx` / `kubens`)
+
+Eliminate lengthy `--context` and `-n` flags:
+
+```bash title="Fast Context Switching"
+# Switch between dev, staging, and prod clusters
+kubectx prod-cluster
+kubectx -            # Toggle to previous cluster
+
+# Switch active namespace
+kubens monitoring
+kubens -             # Toggle to previous namespace
+```
+
+---
+
+## 4. Interactive Terminal Dashboard: `k9s`
+
+`k9s` is a keyboard-driven terminal UI that dramatically speeds up cluster navigation:
+
+```bash title="Launch k9s"
+# Open k9s targeting current context
+k9s
+
+# Launch k9s directly in a specific namespace
+k9s -n production
+```
+
+### Essential `k9s` Keybindings
+- `:pods`, `:svc`, `:deploy` : Jump directly to resource views.
+- `l` : View real-time container logs (`Ctrl+F` to search).
+- `s` : Open interactive shell inside selected pod.
+- `d` : Describe selected resource.
+- `e` : Edit resource manifest live in Vim/Nano.
+- `Ctrl+D` : Delete selected pod (trigger replacement).
+- `<Shift>+F` : Instant port-forward modal.
+
+---
+
+## 5. Helm Package Management
+
+```bash title="Helm Lifecycle"
+# Add and update a Helm repository
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+
+# Install a chart with custom values
+helm install redis bitnami/redis -f values.yaml
+
+# Upgrade an existing release
+helm upgrade redis bitnami/redis -f values.yaml
+
+# Roll back release to previous revision
+helm rollback redis 1
+
+# List installed releases across all namespaces
+helm list -A
+```

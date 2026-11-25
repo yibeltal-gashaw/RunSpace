@@ -1,0 +1,89 @@
+---
+title: Cleanup & Repository Hygiene
+description: Sanitize working trees, prune dead remote tracking references, audit large objects, and fix submodules.
+icon: Trash
+---
+
+Commands for keeping developer repositories fast, clean, and free of untracked build artifacts or dead branches.
+
+---
+
+## 1. Deep Cleaning Untracked Files
+
+Remove files ignored by git or left over by build tools:
+
+```bash title="Untracked File Sanitation"
+# Dry run: preview which untracked files will be deleted without touching them
+git clean -nd
+
+# Delete all untracked files and directories
+git clean -fd
+
+# Aggressive clean: delete untracked files AND ignored build outputs (.env, dist/, node_modules/)
+git clean -fdx
+```
+
+---
+
+## 2. Pruning Stale Remote References
+
+When branches are merged and deleted on GitHub/GitLab, your local `origin/*` references stay around unless pruned:
+
+```bash title="Remote Prune Operations"
+# Fetch latest remote state and purge all deleted remote branches
+git fetch -p --all
+
+# Preview stale tracking branches before pruning
+git remote prune origin --dry-run
+
+# Execute remote branch reference pruning
+git remote prune origin
+```
+
+```bash title="Delete Local Branches Already Merged into Main"
+# Linux / macOS / WSL:
+git branch --merged main | grep -v "^\*\|main\|master\|develop" | xargs -r git branch -d
+
+# PowerShell:
+git branch --merged main | Where-Object { $_ -notmatch '^\*|main|master|develop' } | ForEach-Object { git branch -d $_.Trim() }
+```
+
+---
+
+## 3. Audit Large Files Bloating `.git`
+
+Identify massive files accidentally committed in Git history:
+
+```bash title="Inspect Repository Size"
+# Check total size of the .git folder
+du -sh .git
+
+# Find the 10 largest uncompressed blobs in Git history
+git rev-list --objects --all \
+  | git --no-pager check-attr --stdin filter \
+  | awk '{print $1}' \
+  | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' \
+  | sed -n 's/^blob //p' \
+  | sort --numeric-sort --key=2 --reverse \
+  | head -n 10
+```
+
+---
+
+## 4. Submodule Troubleshooting
+
+Commands for initializing, updating, and syncing embedded Git submodules:
+
+```bash title="Submodule Lifecycle"
+# Clone repository with all submodules recursively
+git clone --recurse-submodules <repo-url>
+
+# Initialize and pull nested submodules in an existing clone
+git submodule update --init --recursive
+
+# Pull latest commits for all submodules from their remotes
+git submodule update --remote --merge
+
+# Fix broken submodule URL after remote rename
+git submodule sync --recursive
+```

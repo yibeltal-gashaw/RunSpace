@@ -1,0 +1,55 @@
+---
+title: SQLite CLI (`sqlite3`)
+description: Inspect local application databases, view schemas, format query outputs, vacuum storage, and export to CSV.
+icon: HardDrive
+---
+
+Essential CLI techniques for inspecting local application state, mobile app databases, and embedded SQLite files.
+
+---
+
+## 1. Quick Inspection & Formatting
+
+```bash title="Execute SQLite Queries"
+# Query database with clean column headers and aligned boxes
+sqlite3 -header -column app.db "SELECT id, title, created_at FROM posts LIMIT 10;"
+
+# Format output as markdown table
+sqlite3 -header -markdown app.db "SELECT * FROM settings;"
+
+# Print table schema
+sqlite3 app.db ".schema users"
+
+# List all tables in the database
+sqlite3 app.db ".tables"
+```
+
+---
+
+## 2. Maintenance & Optimization
+
+```bash title="Optimize Database"
+# Reclaim unused disk space and defragment database
+sqlite3 app.db "VACUUM;"
+
+# Recompute statistics to optimize query planner
+sqlite3 app.db "ANALYZE;"
+
+# Check database integrity for corruption
+sqlite3 app.db "PRAGMA integrity_check;"
+```
+
+---
+
+## 3. Import & Export Workflows
+
+```bash title="Data Conversion"
+# Export query results directly to CSV
+sqlite3 -header -csv app.db "SELECT * FROM orders;" > orders.csv
+
+# Dump entire database to SQL statements
+sqlite3 app.db ".dump" > full_backup.sql
+
+# Restore database from SQL dump
+sqlite3 restored.db < full_backup.sql
+```

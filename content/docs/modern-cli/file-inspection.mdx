@@ -1,0 +1,87 @@
+---
+title: File & Resource Inspection (`bat`, `eza`, `dust`, `btm`)
+description: Beautiful syntax highlighting with bat, modern directory listing with eza, interactive disk usage with dust/gdu, and bottom.
+icon: Eye
+---
+
+Visual, human-friendly tools for reading source code, viewing file trees, diagnosing disk consumption, and monitoring system resources.
+
+---
+
+## 1. Syntax-Highlighted Paging: `bat`
+
+A `cat` clone with syntax highlighting, Git integration, and automatic paging.
+
+```bash title="bat Usage"
+# View file with syntax highlighting, line numbers, and git diff markers
+bat src/index.ts
+
+# View specific line range (-r)
+bat -r 20:50 content/docs/index.mdx
+
+# Show non-printable characters (tabs, newlines, spaces)
+bat -A nginx.conf
+
+# Plain view without line numbers or borders (useful for copy-pasting)
+bat -p package.json
+```
+
+---
+
+## 2. Modern Directory Trees: `eza`
+
+A modern replacement for `ls` supporting color schemes, file type icons, and Git status indicators.
+
+```bash title="eza Commands"
+# Extended list view with human file sizes and Git status
+eza -la --git
+
+# Recursive tree view limited to 2 levels deep
+eza --tree --level=2
+
+# Tree view excluding heavy directories like node_modules and target
+eza --tree --level=3 -I "node_modules|.git|dist"
+
+# Sort files by newest modification time
+eza -l --sort=modified
+```
+
+---
+
+## 3. Visual Disk Usage: `dust` & `gdu`
+
+Find which subdirectories are eating all your disk space without running slow `du` pipelines:
+
+```bash title="Visual Disk Audits"
+# dust: Displays horizontal bar chart of folder sizes
+dust
+
+# Show depth of 2 levels only
+dust -d 2
+
+# Exclude specific heavy folder
+dust -X node_modules
+
+# gdu: Fast interactive terminal disk usage explorer
+gdu /var/log
+```
+
+---
+
+## 4. Modern System Monitor: `bottom` (`btm`)
+
+A cross-platform graphical process monitor and system resource visualizer:
+
+```bash title="Launch bottom"
+# Open graphical CPU/Memory/Network/Disk dashboard
+btm
+
+# Basic layout mode without graphs (low-bandwidth/SSH friendly)
+btm --basic
+
+# Key controls in btm:
+# /      : Search / filter processes
+# dd     : Kill selected process
+# c / m  : Sort processes by CPU or Memory
+# Tab    : Switch between widget panels
+```

@@ -2,13 +2,24 @@
   "title": "RunSpace",
   "pages": [
     "index",
-    "---Categories---",
-    "wso2",
+    "---Developer Core---",
+    "git",
+    "api",
+    "modern-cli",
+    "toolchains",
+    "---Containers & Cloud---",
     "docker",
     "portainer",
+    "kubernetes",
+    "wso2",
+    "---Databases & Network---",
+    "databases",
+    "network",
+    "ssh-tunneling",
+    "security",
+    "---Operating Systems---",
     "linux",
     "powershell",
-    "network",
     "system"
   ]
 }

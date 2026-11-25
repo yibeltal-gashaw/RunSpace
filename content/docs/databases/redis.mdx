@@ -1,0 +1,75 @@
+---
+title: Redis CLI (`redis-cli`)
+description: Safe key scanning, TTL inspection, live command monitoring, memory tracking, and latency diagnostics.
+icon: Zap
+---
+
+Commands for managing and diagnosing Redis instances in development and production environments.
+
+---
+
+## 1. Safe Key Scanning (Never use `KEYS *` in Production!)
+
+`KEYS *` is a blocking command that freezes single-threaded Redis servers on large datasets. Always use cursor-based `SCAN`:
+
+```bash title="Non-Blocking Key Discovery"
+# Safely scan keys matching pattern using redis-cli native loop
+redis-cli --scan --pattern "user:*"
+
+# Limit scan batch size to reduce network overhead
+redis-cli --scan --pattern "cache:*" | head -n 50
+
+# Count matching keys without loading entire keyspace
+redis-cli --scan --pattern "session:*" | wc -l
+```
+
+---
+
+## 2. Key Inspection, TTL & Types
+
+```bash title="Key Operations"
+# Inspect key type (string, hash, list, set, zset)
+redis-cli TYPE "session:abc123xyz"
+
+# Check Time To Live (returns seconds remaining; -1 = no expiration, -2 = key does not exist)
+redis-cli TTL "session:abc123xyz"
+
+# Set or update expiration in seconds
+redis-cli EXPIRE "session:abc123xyz" 3600
+
+# Remove expiration making key persistent
+redis-cli PERSIST "session:abc123xyz"
+
+# Inspect key memory footprint
+redis-cli MEMORY USAGE "session:abc123xyz"
+```
+
+---
+
+## 3. Real-Time Command Streaming & Profiling
+
+```bash title="Live Monitoring"
+# Stream every command processed by the Redis server in real time (Development triage)
+redis-cli MONITOR
+
+# Sample slow queries taking longer than configured threshold
+redis-cli SLOWLOG GET 10
+
+# Reset slow query log
+redis-cli SLOWLOG RESET
+```
+
+---
+
+## 4. Server Health & Memory Statistics
+
+```bash title="Instance Statistics"
+# View human-readable memory overview
+redis-cli INFO memory | grep -E "used_memory_human|maxmemory_human"
+
+# View client connections and blocked clients
+redis-cli INFO clients
+
+# Check Redis response latency
+redis-cli --latency
+```

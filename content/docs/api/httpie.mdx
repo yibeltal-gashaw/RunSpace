@@ -1,0 +1,73 @@
+---
+title: Human-Friendly HTTP with `httpie`
+description: Intuitive CLI HTTP client featuring simplified REST syntax, auto-JSON formatting, sessions, and downloads.
+icon: Zap
+---
+
+`httpie` (`http` / `https`) is an ergonomic alternative to `curl` designed for testing APIs with clean output and intuitive argument flags.
+
+---
+
+## 1. Basic REST Requests
+
+Notice how JSON fields can be supplied as key-value pairs without quoting JSON brackets:
+
+```bash title="Common HTTP Methods"
+# GET request (default verb)
+http GET https://api.example.com/v1/health
+
+# POST JSON payload (strings use '=', numbers/booleans use ':=')
+http POST https://api.example.com/v1/users \
+  name="Sarah Connor" \
+  age:=29 \
+  active:=true
+
+# PUT request
+http PUT https://api.example.com/v1/users/12 role="admin"
+
+# DELETE request
+http DELETE https://api.example.com/v1/users/12
+```
+
+---
+
+## 2. Authentication & Headers
+
+```bash title="Headers and Tokens"
+# Bearer Token authorization
+http https://api.example.com/v1/profile "Authorization:Bearer YOUR_TOKEN"
+
+# Basic HTTP Authentication
+http -a username:password https://api.example.com/admin
+
+# Custom headers
+http https://api.example.com/v1/items X-Custom-Header:DeveloperMode
+```
+
+---
+
+## 3. File Uploads & Forms
+
+```bash title="Multipart Forms"
+# Send standard form data (-f)
+http -f POST https://api.example.com/login username="admin" password="password123"
+
+# Upload a file with form data (@file syntax)
+http -f POST https://api.example.com/upload avatar@/path/to/profile.png description="Profile picture"
+```
+
+---
+
+## 4. Output Filtering & Sessions
+
+```bash title="Control Response Output"
+# Print response headers ONLY (-h)
+http -h https://api.example.com
+
+# Print response body ONLY (-b)
+http -b https://api.example.com
+
+# Persist cookies and auth across multiple calls using sessions
+http --session=logged-in -a user:pass https://api.example.com/login
+http --session=logged-in https://api.example.com/protected-dashboard
+```

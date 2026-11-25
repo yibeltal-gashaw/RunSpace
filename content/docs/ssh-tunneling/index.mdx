@@ -1,0 +1,38 @@
+---
+title: SSH & Tunneling Overview
+description: Operational reference for secure shell port forwarding, bastion proxy jumps, connection multiplexing, and instant webhook tunnels.
+icon: Key
+---
+
+Welcome to the **SSH & Tunneling** operational reference for RunSpace. This section covers establishing encrypted bridges between local environments and remote infrastructure, accessing air-gapped databases, and exposing local services to public webhooks without firewall modifications.
+
+---
+
+## Port Forwarding Quick Reference
+
+| Forwarding Type | Flag | Typical Scenario | Example Command |
+| :--- | :--- | :--- | :--- |
+| **Local Port Forward** | `-L` | Access remote internal DB from localhost | `ssh -L 5433:localhost:5432 user@bastion` |
+| **Remote Port Forward** | `-R` | Share local dev server with remote client | `ssh -R 8080:localhost:3000 user@vps` |
+| **Dynamic SOCKS Proxy** | `-D` | Route browser traffic through remote host | `ssh -D 1080 -N -C user@vps` |
+| **Bastion Jump** | `-J` | Access target server through an intermediary | `ssh -J bastion.corp target-internal` |
+| **Public Webhook Tunnel** | *Cloudflare* | Expose localhost to public HTTPS instantly | `cloudflared tunnel --url http://localhost:3000` |
+
+---
+
+## Sub-Modules
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/ssh-tunneling/ssh-forwarding">1. SSH Port Forwarding & Config</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Local, remote, and dynamic SOCKS tunneling, jump hosts, multiplexing sessions with ControlMaster, and SSH agent forwarding.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/ssh-tunneling/webhooks-tunnels">2. Webhook & Public Dev Tunnels</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Exposing local development ports to external webhooks with Cloudflare Tunnels (cloudflared), ngrok, and localtunnel.</p>
+  </div>
+</div>

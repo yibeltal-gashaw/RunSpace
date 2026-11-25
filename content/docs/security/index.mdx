@@ -1,0 +1,38 @@
+---
+title: Security, Certificates & Secrets Overview
+description: Operational reference for inspecting SSL/TLS certificates, generating local development CAs, scanning repos for leaked keys, and container CVE audits.
+icon: ShieldCheck
+---
+
+Welcome to the **Security & Secrets** operational reference for RunSpace. This section provides commands for auditing TLS handshakes and certificate expiration, generating self-signed wildcard certificates for local HTTPS development, scanning repositories for hardcoded API secrets, and auditing container images with Trivy.
+
+---
+
+## Security Rapid Cheat Sheet
+
+| Task | Command | Purpose |
+| :--- | :--- | :--- |
+| **Check Remote Cert Expiration** | `openssl s_client -connect host:443 2>/dev/null \| openssl x509 -noout -dates` | Pulls remote certificate and prints `notBefore` and `notAfter` dates. |
+| **Check Cert SAN Domains** | `openssl s_client -connect host:443 2>/dev/null \| openssl x509 -noout -ext subjectAltName` | Lists all domains and subdomains covered by the SSL certificate. |
+| **Scan Git Repo for Leaked Secrets** | `gitleaks detect --verbose` | Scans commit history for exposed API keys, private tokens, and passwords. |
+| **Scan Container Image for CVEs** | `trivy image --severity HIGH,CRITICAL nginx:latest` | Audits container packages against known vulnerability databases. |
+| **Encrypt File with `age`** | `age -p secrets.env > secrets.env.age` | Password-protects sensitive configuration files with modern encryption. |
+
+---
+
+## Sub-Modules
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/security/certificates">1. SSL/TLS Certificates (`openssl`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Inspect remote certificates, verify certificate chains, decode PEM/CRT files, and generate local wildcard development certs.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/security/secrets-scanning">2. Secrets Scanning & Image CVEs</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Prevent credential leaks with gitleaks, scan Docker containers with trivy, and encrypt sensitive configuration files with age.</p>
+  </div>
+</div>

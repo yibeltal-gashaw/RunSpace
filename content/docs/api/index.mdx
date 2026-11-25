@@ -1,0 +1,50 @@
+---
+title: API & Data Wrangling Overview
+description: Operational reference for HTTP probing, latency benchmarking, JSON transformations, YAML updates, and human-friendly REST requests.
+icon: Globe
+---
+
+Welcome to the **API & Data Wrangling** hub for RunSpace. This section provides battle-tested CLI recipes for diagnosing HTTP endpoints, parsing complex JSON streams, modifying Kubernetes and Docker Compose YAML files, and sending rapid REST queries.
+
+---
+
+## Sub-Modules
+
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/api/curl">1. Advanced `curl` Operations</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">HTTP latency timing breakdowns (DNS, TLS, TTFB), bearer authentication, multipart uploads, SSL certificate inspection, and HTTP/2 testing.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/api/jq">2. JSON Processing (`jq`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Filtering objects with select, mapping arrays, extracting nested values, CSV/TSV conversions, and handling streaming logs.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/api/yq">3. YAML Manipulation (`yq`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">In-place YAML updates, querying Docker Compose and Kubernetes manifests, converting between YAML, JSON, and XML.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/api/httpie">4. Human-Friendly HTTP (`httpie`)</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Simplified syntax for REST verbs, automated JSON formatting, authentication flags, and session persistence.</p>
+  </div>
+</div>
+
+---
+
+## Rapid Diagnostic One-Liners
+
+| Scenario | Command | Purpose |
+| :--- | :--- | :--- |
+| **Inspect Response Headers Only** | `curl -sI https://api.example.com` | Prints status code and HTTP headers without downloading body. |
+| **Extract JSON Field** | `curl -s https://api.example.com/health \| jq -r '.status'` | Queries API and pulls raw `.status` field without quotes. |
+| **Measure HTTP Latency** | `curl -w "@curl-format.txt" -o /dev/null -s https://api.example.com` | Breaks down DNS resolution, TCP handshake, TLS setup, and TTFB. |
+| **Pretty Print JSON Pipe** | `cat response.json \| jq .` | Formats and colorizes JSON stream with syntax highlighting. |
+| **In-place YAML Tag Update** | `yq -i '.services.web.image = "nginx:1.27"' docker-compose.yml` | Updates image tag directly without altering comments or formatting. |

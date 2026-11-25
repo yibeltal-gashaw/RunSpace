@@ -1,0 +1,12 @@
+{
+  "title": "PowerShell",
+  "pages": [
+    "index",
+    "---Operations---",
+    "port-hunting",
+    "network-testing",
+    "debugging",
+    "environment-variables",
+    "filesystem"
+  ]
+}

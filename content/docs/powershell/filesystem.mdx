@@ -1,0 +1,70 @@
+---
+title: Filesystem Operations & Search
+description: Recursive text search with Select-String, finding large disk hogs, deep directory deletion, and file hashing.
+icon: FolderTree
+---
+
+Techniques for filesystem inspection, fast directory cleanup, file integrity verification, and code searches.
+
+---
+
+## 1. Search Text Inside Files (`Select-String` / Alias: `sls`)
+
+`Select-String` provides recursive text filtering similar to Unix `grep`:
+
+```powershell title="Search Codebase (PowerShell Grep)"
+# Search keyword across specific file extensions
+Get-ChildItem -Recurse -Include *.ts, *.tsx, *.env | 
+  Select-String -Pattern "DATABASE_URL"
+
+# Search with surrounding context lines (2 lines before and after)
+Select-String -Path "src/**/*.ts" -Pattern "TODO" -Context 2, 2
+```
+
+---
+
+## 2. Find Top 10 Largest Files (Disk Cleanup)
+
+Quickly locate large build caches, ISOs, logs, or bloated artifacts consuming drive space:
+
+```powershell title="Find Largest Files"
+Get-ChildItem -Recurse -File -ErrorAction SilentlyContinue |
+  Sort-Object Length -Descending |
+  Select-Object -First 10 Name, @{Name="Size (MB)"; Expression={[math]::round($_.Length / 1MB, 2)}}, FullName
+```
+
+---
+
+## 3. Fast Recursive Directory Deletion
+
+Windows Explorer often hangs or throws path-length errors on deep nested folders like `node_modules` or `.cache`. Use PowerShell:
+
+```powershell title="Delete Deep Directory Tree"
+Remove-Item -Path "./node_modules" -Recurse -Force
+```
+
+---
+
+## 4. Generate & Verify Cryptographic Hashes
+
+Compute cryptographic checksums to verify downloads and package integrity:
+
+```powershell title="Get-FileHash"
+# SHA256 (Default)
+Get-FileHash ./package.zip
+
+# Specific algorithm (MD5, SHA1, SHA256, SHA512)
+Get-FileHash -Algorithm SHA512 ./release.tar.gz
+```
+
+---
+
+## 5. Find Files Modified in the Last 24 Hours
+
+Useful for finding recent log entries, build outputs, or recently touched source files:
+
+```powershell title="Find Recently Modified Files"
+Get-ChildItem -Recurse -File | 
+  Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-1) } |
+  Select-Object Name, LastWriteTime, Length
+```

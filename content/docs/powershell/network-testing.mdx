@@ -1,0 +1,87 @@
+---
+title: Network Testing & API Diagnostics
+description: TCP handshakes, endpoint latency testing, DNS resolution, and REST API querying with Invoke-RestMethod.
+icon: Globe
+---
+
+PowerShell includes high-performance built-in cmdlets for network diagnostics and HTTP requests that replace legacy tools like `telnet`, `nc` (netcat), `dig`, and `curl`.
+
+---
+
+## 1. Test TCP Port Connectivity (Telnet Alternative)
+
+Verify if a local or remote port is open and accepting TCP handshakes:
+
+```powershell title="Test-NetConnection (Alias: tnc)"
+# Test local database ports
+Test-NetConnection -ComputerName "localhost" -Port 5432
+Test-NetConnection -ComputerName "localhost" -Port 3306
+
+# Test remote microservice or API
+Test-NetConnection -ComputerName "api.github.com" -Port 443
+```
+
+**Output Fields:**
+- `TcpTestSucceeded`: `True` indicates a successful 3-way TCP handshake; `False` indicates firewall drop or closed port.
+- `RoundTripTime`: Network latency in milliseconds (when ICMP echo is enabled).
+
+---
+
+## 2. Traceroute with Latency
+
+Trace network hops to a destination server to locate routing bottlenecks:
+
+```powershell title="Trace Route"
+Test-NetConnection -ComputerName "8.8.8.8" -TraceRoute
+```
+
+---
+
+## 3. Query REST APIs with JSON Deserialization
+
+`Invoke-RestMethod` (`irm`) sends HTTP requests and automatically converts JSON responses into native PowerShell objects:
+
+```powershell title="Invoke-RestMethod (Alias: irm)"
+# Direct GET with property access
+$release = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/terminal/releases/latest"
+$release.tag_name
+$release.assets | Select-Object name, download_count
+```
+
+### POST JSON Payload
+
+```powershell title="POST Request with JSON Body"
+$payload = @{
+  title = "Deploy bugfix"
+  environment = "staging"
+  automated = $true
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:3000/api/deploy" -Method Post -Body $payload -ContentType "application/json"
+```
+
+---
+
+## 4. Inspect HTTP Headers (`Invoke-WebRequest`)
+
+Retrieve full response metadata, status codes, and HTTP headers:
+
+```powershell title="Inspect Headers"
+$res = Invoke-WebRequest -Uri "https://api.github.com" -Method Head
+$res.StatusCode
+$res.Headers["X-RateLimit-Remaining"]
+```
+
+---
+
+## 5. DNS Lookup & Record Resolution
+
+Query DNS servers for specific record types (A, AAAA, CNAME, TXT, MX):
+
+```powershell title="Resolve-DnsName"
+# Standard A record lookup
+Resolve-DnsName -Name "google.com" -Type A
+
+# Query specific nameserver
+Resolve-DnsName -Name "internal.company.corp" -Server "10.0.0.1"
+```

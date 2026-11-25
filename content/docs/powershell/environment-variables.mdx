@@ -1,0 +1,83 @@
+---
+title: Environment Variables & PATH Debugging
+description: Inspect and split PATH, locate binaries, manage session and persistent user/machine environment variables.
+icon: Variable
+---
+
+Environment variable collisions and missing `$env:PATH` entries are among the most frequent causes of CLI command failures (`command not found`).
+
+---
+
+## 1. Pretty-Print `$env:PATH`
+
+Splits the combined semicolon string onto separate lines to verify CLI directory registrations:
+
+```powershell title="Inspect PATH Directories"
+$env:PATH -split ";"
+```
+
+---
+
+## 2. Locate Executable Binary (`which` / `where` Alternative)
+
+Find the exact binary path being resolved by your shell:
+
+```powershell title="Get-Command (Alias: gcm)"
+# Find absolute path of an executable
+(Get-Command git).Source
+(Get-Command node).Source
+(Get-Command docker).Source
+
+# Search all matching executables in PATH
+Get-Command *python* | Select-Object Name, Source
+```
+
+---
+
+## 3. Temporary Session Variables
+
+Set or override an environment variable for the lifetime of the active terminal session:
+
+```powershell title="Session Scope Variables"
+# Set variable
+$env:NODE_ENV = "development"
+$env:PORT = "8080"
+
+# Read variable
+$env:NODE_ENV
+
+# Clear / unset variable
+$env:NODE_ENV = $null
+```
+
+---
+
+## 4. Persist Environment Variables (User / Machine)
+
+Permanently persist environment variables into the Windows Registry:
+
+```powershell title="Permanent Environment Variables"
+# Set permanent user variable (No admin required)
+[Environment]::SetEnvironmentVariable("API_KEY", "prod_secret_token", "User")
+
+# Read permanent variable
+[Environment]::GetEnvironmentVariable("API_KEY", "User")
+
+# Delete permanent variable
+[Environment]::SetEnvironmentVariable("API_KEY", $null, "User")
+```
+
+---
+
+## 5. Filter All Active Environment Variables
+
+List and filter the entire environment variable table:
+
+```powershell title="Search Environment Variables"
+# List all variables
+Get-ChildItem env:
+
+# Filter by keyword pattern
+Get-ChildItem env:*TOKEN*
+Get-ChildItem env:*NODE*
+```

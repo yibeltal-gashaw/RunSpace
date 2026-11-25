@@ -1,0 +1,73 @@
+---
+title: Port Hunting & Process Termination
+description: Identify processes locking local ports, query TCP connections, and force-terminate hanging services.
+icon: Radio
+---
+
+When developing web apps or microservices, dev servers (Next.js, Vite, NestJS, Docker, Express) often crash or terminate improperly, leaving the listening socket locked with `EADDRINUSE: address already in use :::3000`.
+
+---
+
+## 1. Query Port Listeners
+
+Find the process ID (PID) and connection state for any local port currently in `Listen` state:
+
+```powershell title="Query Listener by Port"
+Get-NetTCPConnection -LocalPort 3000 -State Listen | 
+  Select-Object LocalAddress, LocalPort, OwningProcess, State
+```
+
+**Parameters:**
+- `-LocalPort 3000`: Filters TCP connections to the specified local port number.
+- `-State Listen`: Filters only actively listening ports waiting for incoming handshakes.
+- `OwningProcess`: The process identifier (PID) of the application binding the socket.
+
+---
+
+## 2. Identify the Locking Application
+
+Convert the raw PID into the actual executable name and process path:
+
+```powershell title="Resolve Process Name"
+Get-Process -Id (Get-NetTCPConnection -LocalPort 3000 -State Listen).OwningProcess | 
+  Select-Object Id, ProcessName, Path, CPU, WorkingSet64
+```
+
+---
+
+## 3. Kill the Locking Process (One-Liner)
+
+Immediately terminate whatever process is occupying the port so you can restart your dev server:
+
+```powershell title="Terminate Locking Process by Port"
+Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000 -State Listen).OwningProcess -Force
+```
+
+---
+
+## 4. Kill Processes by Name
+
+Terminate all running instances of a specific runtime or CLI tool:
+
+```powershell title="Batch Process Kill"
+# Terminate hanging Node.js dev servers
+Stop-Process -Name "node" -Force
+
+# Terminate Python instances
+Stop-Process -Name "python" -Force
+
+# Terminate Java runtime instances
+Stop-Process -Name "java" -Force
+```
+
+---
+
+## 5. List All Active TCP Listeners Ordered by Port
+
+Audit every listening port on your workstation:
+
+```powershell title="Audit All Listening Ports"
+Get-NetTCPConnection -State Listen |
+  Select-Object LocalPort, OwningProcess, @{Name="ProcessName"; Expression={(Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName}} |
+  Sort-Object LocalPort -Unique
+```

@@ -1,0 +1,21 @@
+---
+title: Portainer Security & Recovery
+description: Password recovery & admin reset.
+icon: Shield
+---
+
+Administrative credential recovery tools.
+
+---
+
+## Reset Forgotten Admin Password
+
+When locked out of Portainer, stop the daemon and execute the official helper image to reset the administrator password to a new temporary password.
+
+```bash
+docker stop portainer && docker run --rm -v portainer_data:/data portainer/helper-reset-password && docker start portainer
+```
+
+<Callout type="info" title="Console Output">
+The helper container will print temporary credentials to the terminal stdout. Copy them immediately and change the password upon your next login.
+</Callout>

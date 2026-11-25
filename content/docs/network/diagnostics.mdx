@@ -1,0 +1,37 @@
+---
+title: Network Diagnostics & Port Probing
+description: DNS flushing, listener checking & TCP probes.
+icon: Activity
+---
+
+Host networking diagnostics for troubleshooting connection bottlenecks and binding conflicts.
+
+---
+
+## 1. Flush DNS Resolver Cache
+
+Purge local Windows client DNS cache to force immediate re-resolution of updated DNS records.
+
+```powershell
+ipconfig /flushdns
+```
+
+---
+
+## 2. Find Process Listening on Port
+
+Identify the Process ID (PID) binding a local TCP/UDP port on Windows to diagnose port conflicts.
+
+```powershell
+netstat -ano | findstr :<PORT>
+```
+
+---
+
+## 3. PowerShell TCP Handshake Probe
+
+Perform a raw TCP socket connection check to test remote host reachability without installing third-party utilities.
+
+```powershell
+Test-NetConnection -ComputerName <HOST> -Port <PORT>
+```

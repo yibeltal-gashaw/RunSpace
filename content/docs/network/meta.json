@@ -1,0 +1,9 @@
+{
+  "title": "Network & Tailscale",
+  "pages": [
+    "index",
+    "---Operations---",
+    "vpn",
+    "diagnostics"
+  ]
+}

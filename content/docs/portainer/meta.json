@@ -1,0 +1,10 @@
+{
+  "title": "Portainer",
+  "pages": [
+    "index",
+    "---Operations---",
+    "deployment",
+    "maintenance",
+    "security"
+  ]
+}

@@ -1,0 +1,44 @@
+---
+title: Developer Command Dashboard
+description: Instant reference, copyable infrastructure commands, and container operation workflows.
+icon: LayoutDashboard
+---
+
+Welcome to **RunSpace**, your fast personal developer dashboard engineered for immediate access to daily operational workflows, container commands, VPN mesh routing, and system utilities.
+
+---
+
+## Omni-Search Router Syntax
+
+The global search bar at the top acts as an omni-router. Use prefix shortcuts to query developer repositories directly:
+
+| Prefix | Target Engine | Example Query | Direct Destination |
+| :--- | :--- | :--- | :--- |
+| `d:` | **Docker Hub** | `d: redis alpine` | `hub.docker.com/search?q=redis+alpine` |
+| `gh:` | **GitHub** | `gh: waku` | `github.com/search?q=waku` |
+| `so:` | **StackOverflow** | `so: docker socket permission` | `stackoverflow.com/search?q=docker+socket` |
+| *(none)* | **Google Search** | `tailscale exit node guide` | `google.com/search?q=tailscale...` |
+
+---
+
+## Categories & Quick Navigation
+
+Jump directly into a category to view verified CLI snippets:
+
+| Category | Description | Sub-sections | Link |
+| :--- | :--- | :--- | :--- |
+| **Docker** | Container lifecycle, live logs, compose stacks, and cleanup | `installation`, `logs`, `deployment` | [Docker Docs](/docs/docker) |
+| **Portainer** | UI management, edge agents, volume snapshots & admin recovery | `deployment`, `maintenance`, `security` | [Portainer Docs](/docs/portainer) |
+| **Network & Tailscale** | Mesh VPN routing, exit node advertisement, and port probing | `vpn`, `diagnostics` | [Network Docs](/docs/network) |
+| **System / Windows** | WSL instance control, winget batch upgrades, and process kills | `wsl`, `system-utils` | [System Docs](/docs/system) |
+| **WSO2 Carbon** | Enterprise middleware logs, correlation ID tracing & real-time tailing | `logs` | [WSO2 Docs](/docs/wso2) |
+
+---
+
+## Local Service Ports
+
+Quick reference for common developer service endpoints:
+
+- **Portainer Web UI:** [http://localhost:9000](http://localhost:9000) or [https://localhost:9443](https://localhost:9443)
+- **Local Application Server:** [http://localhost:3000](http://localhost:3000)
+- **Edge Node Agent:** `port 9001`

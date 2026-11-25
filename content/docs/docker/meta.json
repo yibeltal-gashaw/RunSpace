@@ -1,0 +1,10 @@
+{
+  "title": "Docker",
+  "pages": [
+    "index",
+    "---Operations---",
+    "installation",
+    "logs",
+    "deployment"
+  ]
+}

@@ -10,6 +10,9 @@
     "typegen": "waku router typegen"
   },
   "dependencies": {
+    "fumadocs-core": "^16.19.7",
+    "fumadocs-mdx": "^15.6.4",
+    "fumadocs-ui": "^16.19.7",
     "hono": "^4.13.17",
     "lucide-react": "^1.80.0",
     "react": "~19.3.1",

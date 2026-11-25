@@ -1,0 +1,10 @@
+{
+  "title": "WSO2 Carbon",
+  "pages": [
+    "index",
+    "---Operations---",
+    "logs",
+    "specialized-logs",
+    "log-management"
+  ]
+}

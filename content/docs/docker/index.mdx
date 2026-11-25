@@ -1,0 +1,52 @@
+---
+title: Docker Overview
+description: Container lifecycle, image cleanup, inspection & runtime debugging.
+icon: Container
+---
+
+Docker provides containerized application execution with kernel-level isolation. This section provides verified CLI commands for container lifecycle maintenance, real-time log monitoring, and compose orchestration.
+
+---
+
+## Sub-Categories
+
+Select an operational focus to view specialized command snippets:
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/docker/installation">1. Installation</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Automated installation scripts, user group permissions, and health checks.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/docker/logs">2. Logs & Diagnostics</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Real-time log tailing, container event bus monitoring, and JSON log paths.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/docker/deployment">3. Deployment & Prune</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Docker Compose recreation, deep system cleanup, and live resource stats.</p>
+  </div>
+</div>
+
+---
+
+## Quick Reference Cheat Sheet
+
+```bash title="Quick Common Commands"
+# Check running containers
+docker ps
+
+# Check all containers including stopped
+docker ps -a
+
+# View container resource stats
+docker stats --no-stream
+
+# Follow logs of a container
+docker logs -f --tail 50 <container_id>
+```

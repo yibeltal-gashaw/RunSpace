@@ -1,0 +1,47 @@
+---
+title: Windows Package & System Utilities
+description: Package upgrades, process termination & environment.
+icon: Wrench
+---
+
+Developer utilities for application updates, process management, and PATH debugging.
+
+---
+
+## 1. Upgrade All Installed Software (Winget)
+
+Batch upgrade all installed development tools, CLIs, runtimes, and desktop applications using the official Windows Package Manager.
+
+```powershell
+winget upgrade --all --include-unknown
+```
+
+---
+
+## 2. Force Kill Process by PID
+
+Immediately terminate an unresponsive or hanging application by its process identifier.
+
+```powershell
+Stop-Process -Id <PID> -Force
+```
+
+---
+
+## 3. List All Active TCP Listeners
+
+Query the Windows network stack for all open listening ports and their associated process IDs, ordered cleanly by port number.
+
+```powershell
+Get-NetTCPConnection -State Listen | Select-Object LocalAddress,LocalPort,OwningProcess | Sort-Object LocalPort
+```
+
+---
+
+## 4. Inspect System PATH Entries
+
+Format and output each semicolon-separated directory in `$env:PATH` onto a separate readable line.
+
+```powershell
+$env:PATH -split ";"
+```

@@ -1,0 +1,27 @@
+---
+title: Portainer Maintenance & Upgrades
+description: Version upgrades & volume backups.
+icon: RefreshCw
+---
+
+Maintenance procedures for keeping Portainer updated and safeguarding settings and database state.
+
+---
+
+## 1. Upgrade Portainer CE In-Place
+
+Perform a zero-loss upgrade by stopping the container, pulling the latest official image, and restarting with the existing `portainer_data` volume attached.
+
+```bash
+docker stop portainer && docker rm portainer && docker pull portainer/portainer-ce:latest && docker run -d -p 9443:9443 -p 8000:8000 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+```
+
+---
+
+## 2. Backup Portainer Configuration Volume
+
+Take a tarball snapshot of the complete Portainer SQLite database and encryption keys without taking the volume offline permanently.
+
+```bash
+docker run --rm -v portainer_data:/source -v $(pwd):/backup alpine tar -czf /backup/portainer-backup-$(date +%Y%m%d).tar.gz -C /source .
+```

@@ -1,0 +1,61 @@
+---
+title: Compose & Container Deployment
+description: Compose stacks, resource monitoring & lifecycle pruning.
+icon: Rocket
+---
+
+Manage multi-container application stacks, clean up dangling resources, and inspect networking.
+
+---
+
+## 1. Recreate & Pull Compose Stack
+
+Pull updated base images, recreate modified services, and cleanly remove orphaned containers from previous compose manifests.
+
+```bash
+docker compose up -d --force-recreate --pull always --remove-orphans
+```
+
+---
+
+## 2. Deep System Prune
+
+Reclaim host disk space by purging all stopped containers, unused networks, dangling build caches, and unreferenced images.
+
+<Callout type="warn" title="Destructive Operation">
+This command permanently deletes all unused volumes and non-running containers. Ensure data you wish to keep is backed up or actively mounted.
+</Callout>
+
+```bash
+docker system prune -a --volumes -f
+```
+
+---
+
+## 3. Inspect Container IP Address
+
+Extract the internal bridge network IPv4 address assigned to a running container.
+
+```bash
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_id>
+```
+
+---
+
+## 4. Live Resource Monitor
+
+Display a live streaming tabular view of container CPU percentage, RAM consumption, and network I/O traffic.
+
+```bash
+docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
+```
+
+---
+
+## 5. Spawn Interactive Shell Inside Container
+
+Open an interactive TTY shell session inside a target container for internal file exploration and debugging.
+
+```bash
+docker exec -it <container_id> /bin/sh
+```

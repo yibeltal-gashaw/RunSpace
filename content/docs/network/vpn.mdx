@@ -1,0 +1,37 @@
+---
+title: Tailscale VPN & Mesh Routing
+description: Tailscale peer connections, status & exit nodes.
+icon: Globe
+---
+
+WireGuard-powered peer-to-peer mesh networking commands.
+
+---
+
+## 1. Tailscale Connect (SSH + Exit Node)
+
+Connect this node to your Tailnet, advertising it as an Internet exit node and enabling integrated Tailscale SSH authentication.
+
+```bash
+tailscale up --ssh --advertise-exit-node --accept-routes
+```
+
+---
+
+## 2. Show Tailnet Status & Peers
+
+Print active nodes on your mesh network, including their private `100.x` IP addresses, operating systems, and connection relay states.
+
+```bash
+tailscale status
+```
+
+---
+
+## 3. Ping Tailnet Node Directly
+
+Diagnose direct peer-to-peer NAT traversal vs DERP relay latency to a specific peer.
+
+```bash
+tailscale ping <node_name_or_ip>
+```

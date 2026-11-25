@@ -1,0 +1,171 @@
+---
+title: WSO2 Log Search & Filtering
+description: High-speed fixed-string searching, correlation ID tracing, exception filtering & time windows.
+icon: Search
+---
+
+Fast search and filtering CLI commands for troubleshooting WSO2 Carbon runtime logs (`wso2carbon.log` and rotated archives) across API Manager, Micro Integrator, and Identity Server.
+
+---
+
+## Log Files Reference
+
+All standard WSO2 product logs reside in `<CARBON_HOME>/repository/logs/` (or mounted container volumes).
+
+| Log File | Purpose | Search Use Cases |
+| :--- | :--- | :--- |
+| `wso2carbon.log` | Primary server runtime log | Server lifecycle, errors, OSGi bundles, Synapse mediation |
+| `wso2-apigateway.log` | API Gateway engine | API invocation failures, mediation flow issues |
+| `wso2carbon-*.log.gz` | Rolled daily compressed archives | Historical incident analysis without manual decompression |
+| `wso2error.log` | Dedicated error log stream | Consolidated `ERROR` and `FATAL` severity records |
+
+---
+
+## 1. Search by Correlation ID & Transaction ID
+
+WSO2 assigns or propagates Correlation IDs (and Message IDs) across mediation flows. Use fixed-string searching (`-F`) for high-speed matching.
+
+### Exact Correlation ID Search
+Search the active log for all events tied to a specific Correlation ID:
+
+```bash
+grep -F "c8a45f92-9a3b-4822-83b5-312948e7150a" repository/logs/wso2carbon.log
+```
+
+### Chained Multi-Token Correlation Search
+Narrow down logs matching a Correlation ID that also include a secondary reference (e.g., Account ID, Order ID, or Transaction Code):
+
+```bash
+grep -F "6afaaa42ce44d65b2c33af90" repository/logs/wso2carbon-11-19-2026.log | grep -F "FT26323520HZ"
+```
+
+### Search Message ID with Line Numbers
+Locate Synapse message tracking identifiers (`urn:uuid:...`) with line numbers for reference:
+
+```bash
+grep -nF "urn:uuid:7c9e1234-5678-4321-abcd-ef0123456789" repository/logs/wso2carbon.log
+```
+
+### Extract Unique Correlation IDs from Errors
+Collect all distinct Correlation IDs associated with `ERROR` level events:
+
+```bash
+grep "ERROR" repository/logs/wso2carbon.log | grep -oE "correlation-id:[a-zA-Z0-9-]+" | sort -u
+```
+
+---
+
+## 2. Search Errors, Exceptions & Full Stack Traces
+
+### Search Errors with Context Lines
+Display the matched `ERROR` line along with 10 lines of surrounding context to capture the root cause and stack trace:
+
+```bash
+grep -n -C 10 "ERROR" repository/logs/wso2carbon.log
+```
+
+**Context Parameters:**
+- `-C <NUM>`: Print `<NUM>` lines of leading and trailing context.
+- `-B <NUM>`: Print `<NUM>` lines of leading context before matching line.
+- `-A <NUM>`: Print `<NUM>` lines of trailing context after matching line.
+
+### Search Specific WSO2 Java Exceptions
+Search for common backend integration faults with the subsequent 25 lines of stack trace:
+
+```bash
+grep -A 25 -E "SynapseException|AxisFault|ConnectException|SocketTimeoutException|SSLHandshakeException" repository/logs/wso2carbon.log
+```
+
+### Search Synapse Error Codes
+Search for common Synapse endpoint timeout and connection failure codes (e.g., `101503` connection refused, `101504` connection timeout, `101505` send error):
+
+```bash
+grep -E "101503|101504|101505" repository/logs/wso2carbon.log
+```
+
+---
+
+## 3. Search Compressed & Rotated Archives (`zgrep`, `zcat`)
+
+When log files are rolled daily and compressed (`.gz`), use `z`-tools to search them without decompressing them to disk.
+
+### Search Compressed `.gz` Log Files
+Search for a transaction reference or Correlation ID across all compressed archives:
+
+```bash
+zgrep -F "c8a45f92-9a3b" repository/logs/wso2carbon-*.log.gz
+```
+
+### Search Mixed Active and Compressed Archives
+Search for an exception across both active uncompressed and rotated compressed archives simultaneously:
+
+```bash
+zgrep -n "SSLHandshakeException" repository/logs/wso2carbon*
+```
+
+### Stream Specific Compressed Archive through Pipeline
+Decompress and pipe a rotated log into a custom multi-grep filter:
+
+```bash
+zcat repository/logs/wso2carbon-11-19-2026.log.gz | grep -F "FT26323520HZ" | grep "ERROR"
+```
+
+---
+
+## 4. Search by Date & Timestamp Windows
+
+Filter log entries during a specific incident timeframe using `sed`, `awk`, or `grep`.
+
+### Time-Window Slice Using `sed`
+Extract lines between two exact timestamps:
+
+```bash
+sed -n '/2026-11-25 10:00:00/,/2026-11-25 10:15:00/p' repository/logs/wso2carbon.log
+```
+
+### Chronological Range Filter Using `awk`
+Filter all log entries within a half-hour time boundary:
+
+```bash
+awk '$0 >= "[2026-11-25 14:00:00" && $0 <= "[2026-11-25 14:30:00"' repository/logs/wso2carbon.log
+```
+
+### Match Specific Hour or Minute
+Quickly isolate all log events generated within a specific hour:
+
+```bash
+grep "\[2026-11-25 14:" repository/logs/wso2carbon.log
+```
+
+Or for a 10-minute window:
+
+```bash
+grep -E "\[2026-11-25 14:[0-1][0-9]:" repository/logs/wso2carbon.log
+```
+
+---
+
+## 5. Multi-File Search & Frequency Aggregation
+
+### Search All Log Files Recursively
+Search across all files in the logs directory for an error string or API name:
+
+```bash
+find repository/logs/ -type f -name "*.log" -exec grep -Hn "APIManagementException" {} +
+```
+
+### Count and Rank Top Recurring Exceptions
+Group, count, and sort the most frequent errors in `wso2carbon.log`:
+
+```bash
+grep "ERROR" repository/logs/wso2carbon.log | awk -F' - ' '{print $2}' | sort | uniq -c | sort -nr | head -n 10
+```
+
+### Search Using Modern Ripgrep (`rg`)
+If `rg` (ripgrep) is installed on the host, perform ultra-fast multithreaded searches across all active and compressed logs:
+
+```bash
+rg -z "SSLHandshakeException" repository/logs/
+```
+
+- `-z`, `--search-zip`: Search compressed `.gz` files alongside standard files.

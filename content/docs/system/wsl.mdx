@@ -1,0 +1,31 @@
+---
+title: WSL Management & Memory Release
+description: Distro lifecycle, shutdowns & RAM release.
+icon: Cpu
+---
+
+Windows Subsystem for Linux (WSL2) maintenance and RAM recovery.
+
+---
+
+## 1. List WSL Distro Status
+
+Inspect installed Linux distributions, their running state, and whether they operate on WSL 1 or WSL 2 architecture.
+
+```powershell
+wsl --list --verbose
+```
+
+---
+
+## 2. Terminate All WSL Instances (Release Memory)
+
+Completely shut down the WSL2 lightweight VM and release all cached RAM back to Windows immediately.
+
+```powershell
+wsl --shutdown
+```
+
+<Callout type="info" title="Memory Reclaim">
+WSL2 memory dynamically expands during large compiles. Running `wsl --shutdown` reclaims consumed physical memory instantly.
+</Callout>

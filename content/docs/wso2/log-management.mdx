@@ -1,0 +1,91 @@
+---
+title: WSO2 Log Streaming & Configuration
+description: Real-time carbon log streaming, line-buffered error tailing & dynamic runtime log level adjustment.
+icon: Terminal
+---
+
+Commands for live streaming WSO2 Carbon logs and dynamically reconfiguring log levels at runtime using cURL and the Micro Integrator CLI without server restarts.
+
+---
+
+## 1. Tail Live WSO2 Carbon Logs
+
+### Stream Active Log in Real Time
+Follow streaming log output from the active `wso2carbon.log` file:
+
+```bash
+tail -f repository/logs/wso2carbon.log
+```
+
+### Follow Recent Historical Buffer (Last 100 Lines)
+Output the last 100 lines and continue streaming new incoming lines:
+
+```bash
+tail -n 100 -f repository/logs/wso2carbon.log
+```
+
+### Stream Live Errors Only (Line-Buffered)
+Monitor real-time logs while suppressing informational noise and showing only errors and exceptions:
+
+```bash
+tail -f repository/logs/wso2carbon.log | grep --line-buffered -E "ERROR|FATAL|Exception"
+```
+
+### Stream Excluding Routine Health Checks & Heartbeats
+Filter out routine health-check polls or heartbeat logs when debugging live traffic:
+
+```bash
+tail -f repository/logs/wso2carbon.log | grep --line-buffered -v -E "health-check|HeartBeat|SynapseThreadPool"
+```
+
+---
+
+## 2. Dynamic Log Level Switching via cURL
+
+Temporarily elevate log levels to `DEBUG` at runtime without restarting the WSO2 server using the WSO2 Management API.
+
+### Enable Wire Logging via cURL (Management API)
+
+```bash
+curl -k -u admin:admin -X POST "https://localhost:9443/management/logging" \
+  -H "Content-Type: application/json" \
+  -d '{"loggerName": "org.apache.synapse.transport.http.wire", "logLevel": "DEBUG"}'
+```
+
+### Reset Wire Logging to INFO
+
+```bash
+curl -k -u admin:admin -X POST "https://localhost:9443/management/logging" \
+  -H "Content-Type: application/json" \
+  -d '{"loggerName": "org.apache.synapse.transport.http.wire", "logLevel": "INFO"}'
+```
+
+### Check Current Logger Level via cURL
+
+```bash
+curl -k -u admin:admin "https://localhost:9443/management/logging?loggerName=org.apache.synapse.transport.http.wire"
+```
+
+---
+
+## 3. WSO2 Micro Integrator CLI (`mi`) Logging
+
+Manage and inspect loggers on WSO2 Micro Integrator deployments using the official `mi` CLI tool.
+
+### Update Logger Level Dynamically
+
+```bash
+mi log-level update org.apache.synapse.transport.http.wire DEBUG
+```
+
+### Inspect Logger Level
+
+```bash
+mi log-level get org.apache.synapse.transport.http.wire
+```
+
+### Stream Remote Log File Directly via CLI
+
+```bash
+mi log-file show wso2carbon.log --tail 100
+```

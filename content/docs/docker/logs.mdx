@@ -1,0 +1,100 @@
+---
+title: Container Logs & Diagnostics
+description: Real-time logs tailing, driver inspection & event monitoring.
+icon: ScrollText
+---
+
+Techniques for troubleshooting container execution issues and observing system lifecycle events.
+
+---
+
+## 1. Tail Live Container Logs
+
+Follow streaming standard output (stdout) and standard error (stderr) with accurate timestamps and 100 lines of historical buffer.
+
+```bash
+docker logs -f --tail 100 -t <container_id>
+```
+
+**Parameters:**
+- `-f`, `--follow`: Stream and follow the log output in real-time (live updates).
+- `-n`, `--tail 100`: Output only the specified number of lines (last 100 lines) from the end of the logs.
+- `--since string`: Show logs since timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes).
+- `-t`, `--timestamps`: Prefix each log line with an accurate timestamp.
+- `--until string`: Show logs before a timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)
+- `<container_id>`: The name or ID (short or full hash) of the target container.
+
+---
+
+## 2. Stream Real-Time Docker Events
+
+Listen to the Docker daemon event bus for container crashes, abnormal terminations, and manual stop operations.
+
+```bash
+docker events --filter 'event=die' --filter 'event=stop'
+```
+
+**Parameters:**
+- `--filter 'event=die'`: Filter real-time events to only capture container exit or crash events (`die`).
+- `--filter 'event=stop'`: Filter real-time events to capture manual or orchestrated container terminations (`stop`). Multiple `--filter` flags can be specified to stream matching events.
+
+---
+
+## 3. Inspect Container JSON Log Path
+
+Find the direct filesystem path on the host to the raw JSON log file for grepping or custom log rotation checks.
+
+```bash
+docker inspect --format='{{.LogPath}}' <container_id>
+```
+
+**Parameters:**
+- `--format='{{.LogPath}}'`, `-f`: Uses a Go template expression to extract and print only the host filesystem path (`LogPath`) of the container's log file.
+- `<container_id>`: The name or ID (short or full hash) of the target container.
+
+---
+
+## 4. Custom Process Formatting (`docker ps`)
+
+Format container status listings using Go template variables to inspect specific columns such as IDs, names, images, status, and port bindings.
+
+### Available Columns
+
+| Column Name | Template Variable |
+| :--- | :--- |
+| `CONTAINER ID` | `{{.ID}}` |
+| `IMAGE` | `{{.Image}}` |
+| `COMMAND` | `{{.Command}}` |
+| `CREATED` | `{{.CreatedAt}}` |
+| `STATUS` | `{{.Status}}` |
+| `PORTS` | `{{.Ports}}` |
+| `NAMES` | `{{.Names}}` |
+| `NETWORKS` | `{{.Networks}}` |
+| `LABELS` | `{{.Labels}}` |
+| `MOUNTS` | `{{.Mounts}}` |
+
+### Common Formats
+
+**Container ID, name, image, and status:**
+
+```bash
+docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}"
+```
+
+**Container ID and ports:**
+
+```bash
+docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Ports}}"
+```
+
+**Include stopped containers:**
+
+```bash
+docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}"
+```
+
+**Show all available container information:**
+
+```bash
+docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Command}}\t{{.CreatedAt}}\t{{.Status}}\t{{.Ports}}"
+```

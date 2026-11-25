@@ -1,0 +1,41 @@
+---
+title: Docker Installation & Bootstrap
+description: Engine bootstrap, user permissions & health check.
+icon: Download
+---
+
+Step-by-step commands to install Docker Engine on Linux distributions and verify host socket permissions.
+
+---
+
+## 1. Automated Docker Engine Installation
+
+Download the official Docker installation script, install Docker Community Edition (CE), and grant socket access to the current non-root user.
+
+```bash
+curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker $USER
+```
+
+<Callout type="warn" title="Session Reload Required">
+After adding your user to the `docker` group, log out and log back in (or run `newgrp docker`) for group permissions to take effect without needing `sudo`.
+</Callout>
+
+---
+
+## 2. Verify Engine & System Status
+
+Inspect client/server version details, active storage drivers, and daemon runtime configurations.
+
+```bash
+docker version && docker info
+```
+
+---
+
+## 3. Smoke Test Verification
+
+Execute the minimal official test container to confirm daemon connectivity, image pulling from Docker Hub, and pipe standard output.
+
+```bash
+docker run --rm hello-world
+```

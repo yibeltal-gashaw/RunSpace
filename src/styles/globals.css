@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/* Documentation link styling */
+article#nd-page a:not([data-card]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]) {
+  color: #2563eb;
+  font-weight: 550;
+  text-decoration: underline;
+  text-underline-offset: 3.5px;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(37, 99, 235, 0.4);
+  transition: all 0.15s ease-in-out;
+}
+
+.dark article#nd-page a:not([data-card]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]) {
+  color: #38bdf8;
+  text-decoration-color: rgba(56, 189, 248, 0.45);
+}
+
+article#nd-page a:not([data-card]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]):hover {
+  color: #1d4ed8;
+  text-decoration-color: currentColor;
+  text-underline-offset: 4.5px;
+}
+
+.dark article#nd-page a:not([data-card]):not([class*="btn"]):not([class*="button"]):not([class*="nd-"]):not([role="button"]):hover {
+  color: #7dd3fc;
+  text-decoration-color: currentColor;
+  text-underline-offset: 4.5px;
+}

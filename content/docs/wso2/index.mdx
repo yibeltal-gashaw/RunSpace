@@ -1,0 +1,58 @@
+---
+title: WSO2 Carbon Overview
+description: Enterprise middleware administration, log analysis & service diagnostics.
+icon: Server
+---
+
+WSO2 Carbon is the modular OSGi-based core underlying WSO2 products (such as API Manager, Micro Integrator, and Identity Server). This section provides verified CLI commands for log analysis, real-time tailing, and trace correlation.
+
+---
+
+## Sub-Categories
+
+Select an operational focus to view specialized command snippets:
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/wso2/logs">1. Search & Filtering</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Correlation IDs, stack traces, compressed .gz archives & time windows.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/wso2/specialized-logs">2. Subsystem Logs</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Correlation latency metrics, HTTP access logs, audit trails & wire logs.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/wso2/log-management">3. Streaming & CLI</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Live tailing, line-buffering, cURL management API & Micro Integrator CLI.</p>
+  </div>
+</div>
+
+---
+
+## Quick Reference Cheat Sheet
+
+```bash title="Essential WSO2 Log Search Commands"
+# Stream real-time logs (suppress info, errors only)
+tail -f repository/logs/wso2carbon.log | grep --line-buffered -E "ERROR|FATAL|Exception"
+
+# Search active log by Correlation ID
+grep -F "c8a45f92-9a3b-4822-83b5-312948e7150a" repository/logs/wso2carbon.log
+
+# Search compressed rotated archives (.gz) without extracting
+zgrep -F "c8a45f92-9a3b" repository/logs/wso2carbon-*.log.gz
+
+# Search errors with 10 lines of stack trace context
+grep -n -C 10 "ERROR" repository/logs/wso2carbon.log
+
+# Filter slow transactions (> 2000ms) in correlation log
+awk -F'|' '$5 > 2000 {print "Duration: "$5"ms | Method: "$6" | Path: "$7}' repository/logs/correlation.log
+
+# Search HTTP access logs for 4xx and 5xx errors
+awk '$9 >= 400 && $9 <= 599 {print $1, $4, $7, $9}' repository/logs/http_access_*.log
+```

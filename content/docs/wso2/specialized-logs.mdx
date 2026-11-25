@@ -1,0 +1,133 @@
+---
+title: WSO2 Subsystem & Protocol Logs
+description: Correlation latency breakdown, HTTP access queries, security audit records & Synapse wire logs.
+icon: Activity
+---
+
+Commands and search filters for specialized WSO2 Carbon subsystem logs, including latency tracing, HTTP access metrics, security audit trails, and raw Synapse wire messages.
+
+---
+
+## 1. WSO2 Correlation Log Analysis (`correlation.log`)
+
+WSO2 Correlation logging records request timing across mediation hops using pipe-separated values:  
+`<correlation-id>|<thread-id>|<call-type>|<start-time>|<duration-ms>|<http-method>|<url>|...`
+
+### Find Slow Requests Exceeding Threshold (> 2000ms)
+Filter all transactions taking more than 2 seconds (2000 milliseconds) and print their duration, method, and endpoint:
+
+```bash
+awk -F'|' '$5 > 2000 {print "Duration: "$5"ms | Method: "$6" | Path: "$7" | Correlation-ID: "$1}' repository/logs/correlation.log
+```
+
+### Trace Complete Hop Latency for a Correlation ID
+Extract all mediation legs and execution times for a single request:
+
+```bash
+grep -F "c8a45f92-9a3b-4822-83b5-312948e7150a" repository/logs/correlation.log | awk -F'|' '{print "Type: "$3, "Duration: "$5"ms", "Target: "$7}'
+```
+
+### Top 10 Slowest Requests
+Sort by duration (5th column) in descending order to identify the slowest calls:
+
+```bash
+sort -t'|' -k5,5nr repository/logs/correlation.log | head -n 10
+```
+
+### Filter by Specific Backend API Context
+Search correlation metrics for a specific API context:
+
+```bash
+grep -F "/petstore/v1" repository/logs/correlation.log | awk -F'|' '{print $1, $5"ms", $6, $7}'
+```
+
+---
+
+## 2. HTTP Access Log Queries (`http_access_*.log`)
+
+Tomcat access logs record all incoming HTTP traffic directed at the WSO2 servlet transports.
+
+### Search for HTTP 4xx & 5xx Status Errors
+Filter for client-side and server-side HTTP errors:
+
+```bash
+awk '$9 >= 400 && $9 <= 599 {print $1, $4, $7, $9}' repository/logs/http_access_*.log
+```
+
+### Search Requests by Client IP Address
+Isolate all HTTP requests originating from a specific client IP:
+
+```bash
+grep "^192.168.1.100" repository/logs/http_access_*.log
+```
+
+### Top 10 Most Hit API Endpoints
+Count and rank requested paths:
+
+```bash
+awk '{print $7}' repository/logs/http_access_*.log | sort | uniq -c | sort -nr | head -n 10
+```
+
+### HTTP Response Code Distribution
+Count total requests grouped by HTTP status code (200, 401, 404, 500, etc.):
+
+```bash
+awk '{print $9}' repository/logs/http_access_*.log | sort | uniq -c | sort -nr
+```
+
+---
+
+## 3. WSO2 Audit Log Inspection (`audit.log`)
+
+WSO2 Carbon records security-sensitive operations such as authentication, authorization, role management, and configuration changes into `audit.log`.
+
+### Search Authentication Failures
+Find all failed login attempts:
+
+```bash
+grep -i "Authentication failed" repository/logs/audit.log
+```
+
+### Search Audit Events for a Specific User
+Track all actions performed by a particular user or admin account:
+
+```bash
+grep -F "user=admin" repository/logs/audit.log
+```
+
+### Search User & Role Lifecycle Events
+Search for user creation, deletion, or permission updates:
+
+```bash
+grep -E "Action: AddUser|Action: DeleteUser|Action: UpdateRole|Action: AddRole" repository/logs/audit.log
+```
+
+---
+
+## 4. Synapse Wire Log Search (Payload & Headers)
+
+When wire logging is enabled (`org.apache.synapse.transport.http.wire`), raw HTTP headers and payloads are output to `wso2carbon.log`.
+
+### Search Incoming / Outgoing Wire Data
+Search for wire log lines showing headers or payloads:
+
+```bash
+grep -E "wire - >>|wire - <<" repository/logs/wso2carbon.log
+```
+
+- `>>`: Inbound request arriving from client or response arriving from backend.
+- `<<`: Outbound request dispatched to backend or response sent to client.
+
+### Find Wire Trace for Specific Endpoint or Resource
+Search for wire requests targeting a specific path with 30 lines of trailing payload content:
+
+```bash
+grep -B 2 -A 30 "wire - >> \"POST /oauth2/token" repository/logs/wso2carbon.log
+```
+
+### Isolate Wire Trace by Worker Thread ID
+When multiple requests run concurrently, filter by worker thread to isolate a single wire trace:
+
+```bash
+grep -F "PassThroughMessageProcessor-12" repository/logs/wso2carbon.log | grep "wire"
+```

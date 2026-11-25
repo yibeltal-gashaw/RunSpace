@@ -1,0 +1,160 @@
+---
+title: Users, Sudo Privileges & SSH Hardening
+description: Configure user groups, manage sudoers drop-in files, enforce SSH key permissions, monitor logins, and audit SUID binaries.
+icon: ShieldCheck
+---
+
+Security standards, identity control, authentication hardening, and privilege auditing workflows for Linux production environments.
+
+---
+
+## 1. User & Group Management
+
+Create unprivileged service users, manage groups, and inspect identity:
+
+```bash title="Create User with Home Directory and Bash Shell"
+# Create new developer user with bash as default shell and home directory
+sudo useradd -m -s /bin/bash deployer
+
+# Set password for the new account
+sudo passwd deployer
+```
+
+```bash title="Group Membership Operations"
+# Add user to secondary groups (e.g. sudo and docker) without removing from existing groups (-aG)
+sudo usermod -aG sudo,docker deployer
+
+# Inspect user ID (UID), group ID (GID), and all group memberships
+id deployer
+```
+
+```bash title="Delete Inactive User"
+# Remove user along with their home directory and mail spool
+sudo userdel -r olduser
+```
+
+---
+
+## 2. Sudo Privileges & Safe Drop-in Files (`visudo`)
+
+Never edit `/etc/sudoers` directly with standard text editors. Always use `visudo` or drop-in files inside `/etc/sudoers.d/` to prevent syntax locks:
+
+```bash title="Create Drop-in Sudoers Configuration"
+# Safely create and validate a sudoers drop-in file
+sudo visudo -f /etc/sudoers.d/deployer
+```
+
+```bash title="Syntax Examples for /etc/sudoers.d/deployer"
+# Grant full passwordless sudo (common for automated CI/CD runners)
+deployer ALL=(ALL:ALL) NOPASSWD: ALL
+
+# Restrict user to restart specific services only (least privilege)
+deployer ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart nginx, /usr/bin/systemctl restart docker
+```
+
+---
+
+## 3. SSH Key Deployment & Strict Permissions
+
+Distribute public keys and enforce the exact POSIX permission rules required by OpenSSH:
+
+```bash title="Generate Modern Ed25519 Key Pair"
+# Generate ed25519 SSH key (preferred over legacy RSA)
+ssh-keygen -t ed25519 -C "admin@runspace.internal"
+```
+
+```bash title="Copy Public Key to Remote Host"
+# Install public key into remote user's ~/.ssh/authorized_keys
+ssh-copy-id -i ~/.ssh/id_ed25519.pub user@remote-host.internal
+```
+
+```bash title="Enforce Strict SSH Directory Permissions"
+# OpenSSH will reject authentication if permissions are too permissive
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/id_ed25519
+chmod 644 ~/.ssh/id_ed25519.pub
+chmod 600 ~/.ssh/config
+```
+
+```bash title="Recommended /etc/ssh/sshd_config Hardening"
+# Disable password authentication and root login (key-based auth only)
+sudo grep -E "^(PasswordAuthentication|PermitRootLogin|PubkeyAuthentication)" /etc/ssh/sshd_config
+
+# Recommended settings:
+# PermitRootLogin prohibit-password
+# PasswordAuthentication no
+# PubkeyAuthentication yes
+
+# Reload SSH service safely
+sudo systemctl reload sshd
+```
+
+---
+
+## 4. Active Sessions & Login Audit History
+
+Identify who is logged into the system and trace authentication history:
+
+```bash title="Active Shell Sessions (w / who)"
+# View logged-in users, idle time, IP addresses, and currently running commands
+w
+
+# View logged-in usernames and login timestamps
+who
+```
+
+```bash title="Login History (last / lastlog)"
+# Show last 20 successful logins and system reboots
+last -n 20
+
+# Show last login date and source IP for every user on the system
+lastlog
+```
+
+```bash title="Inspect Failed Login Attempts"
+# Check auth logs for failed SSH password attempts (brute-force detection)
+sudo grep "Failed password" /var/log/auth.log | tail -n 25
+```
+
+---
+
+## 5. Shell History Sanitization & Privacy
+
+Avoid leaking sensitive tokens, database passwords, or secret keys in `~/.bash_history`:
+
+```bash title="Bash History Protection"
+# Prefix any sensitive command with a leading SPACE to omit from history
+# (Requires HISTCONTROL=ignoreboth or ignorespace in ~/.bashrc)
+ export DATABASE_URL="postgresql://user:secret@localhost:5432/db"
+
+# Clear the current session history and overwrite file
+history -c && history -w
+```
+
+```bash title="Temporarily Disable History for Session"
+# Disable history recording for current terminal
+set +o history
+
+# Re-enable history when finished
+set -o history
+```
+
+---
+
+## 6. SUID/SGID Privilege Auditing & Checksums
+
+Audit binaries configured with Set-UID (`SUID`) flags that execute with root privileges:
+
+```bash title="Audit SUID Binaries"
+# Scan filesystem for executables with SUID permissions (potential privilege escalation paths)
+find / -perm -4000 -type f 2>/dev/null
+```
+
+```bash title="Cryptographic Checksums"
+# Generate SHA-256 hash of a downloaded archive or binary
+sha256sum release-artifact.tar.gz > release-artifact.tar.gz.sha256
+
+# Verify integrity against expected hash file
+sha256sum -c release-artifact.tar.gz.sha256
+```

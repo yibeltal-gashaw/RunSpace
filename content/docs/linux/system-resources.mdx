@@ -1,0 +1,134 @@
+---
+title: System Resources & Hardware Monitoring
+description: Analyze RAM and swap usage, partition saturation, disk hogs, CPU load averages, and kernel OOM killer events.
+icon: Cpu
+---
+
+Real-time diagnostics and capacity inspection commands to identify hardware bottlenecks, storage exhaustion, and memory leaks before they bring down production workloads.
+
+---
+
+## 1. Memory Usage & Swap Diagnostics
+
+Check system RAM capacity, buffer/cache allocations, and swap consumption:
+
+```bash title="Memory Utilization Summary"
+# Human-readable RAM and Swap breakdown
+free -h --wide
+
+# Real-time memory refresh every 2 seconds
+free -h -s 2
+```
+
+**Key Metrics Explained:**
+- **`used`**: Physical memory actively mapped by running processes.
+- **`buff/cache`**: File system buffers and cached page reads. The Linux kernel releases this memory instantly if an application requests it.
+- **`available`**: The true estimation of memory available for starting new applications without swapping.
+- **`swap`**: Disk-backed memory. Persistent high swap usage with active disk I/O indicates memory pressure and performance degradation.
+
+```bash title="Kernel Memory Details"
+# Read deep memory counters directly from /proc
+grep -E "MemTotal|MemFree|MemAvailable|Buffers|Cached|SwapTotal|SwapFree" /proc/meminfo
+```
+
+---
+
+## 2. Disk Space & Inode Saturation
+
+Storage failure often occurs due to raw disk space exhaustion or **inode exhaustion** (too many small files created, preventing new file creation even with gigabytes of free disk space):
+
+```bash title="Storage & Inode Inspection"
+# Check disk capacity across all mounted filesystems
+df -h -x tmpfs -x devtmpfs
+
+# Check inode usage (crucial for Docker volumes, mail queues, or git checkouts)
+df -i -x tmpfs -x devtmpfs
+```
+
+```bash title="Block Device Layout & UUIDs"
+# List block storage devices, mount points, and file system formats
+lsblk -f
+```
+
+---
+
+## 3. Find Disk Storage Hogs
+
+When a disk reaches 100%, locate the largest directories and files causing the overflow:
+
+```bash title="Find Top Space-Consuming Directories"
+# Top 15 largest items in the current directory (human-readable)
+du -ah --max-depth=1 . | sort -rh | head -n 15
+
+# Search from root safely on the same filesystem without crossing mount points
+sudo du -ahx / 2>/dev/null | sort -rh | head -n 25
+```
+
+```bash title="Locate Files Larger than 500MB"
+# Find all files exceeding 500MB on disk
+sudo find / -type f -size +500M -exec ls -lh {} + 2>/dev/null | awk '{print $5, $9}'
+```
+
+---
+
+## 4. CPU Utilization & Load Averages
+
+Evaluate processor load and determine if CPU bottlenecks or I/O waits are choking execution:
+
+```bash title="Load Average & Uptime"
+# Check uptime, active users, and 1-, 5-, and 15-minute load averages
+uptime
+```
+
+**Understanding Load Average:**
+- Compare load numbers against total CPU cores (`nproc`).
+- On an **8-core CPU**, a load average of `8.0` represents 100% ideal utilization. A load of `16.0` means processes are queued and waiting 50% of the time.
+
+```bash title="Detailed CPU Core Architecture"
+# Check core topology, cache sizes, and virtualization capabilities
+lscpu
+```
+
+```bash title="Interactive Task Monitors"
+# Standard batch snapshot (top 20 CPU consumers)
+top -b -n 1 | head -n 25
+
+# Modern interactive task monitor (if installed)
+htop
+```
+
+---
+
+## 5. Kernel Diagnostics & OOM Killer Events
+
+When a memory-heavy service (JVM, Node.js, PostgreSQL, Docker container) abruptly disappears without an error log, the Linux kernel Out-Of-Memory (OOM) Killer may have terminated it:
+
+```bash title="Check for OOM Killer Terminations"
+# Inspect kernel ring buffer for Out-Of-Memory kills with human timestamps
+sudo dmesg -T | grep -i -E "oom|out of memory|killed process"
+
+# View system journal kernel messages with priority alert/err
+sudo journalctl -k -p err -n 50 --no-pager
+```
+
+```bash title="Filter Kernel Warnings and Errors"
+# Display only warnings and critical errors from dmesg
+sudo dmesg -T --level=err,warn
+```
+
+---
+
+## 6. Hardware & Peripheral Identification
+
+Verify physical and virtual hardware specifications:
+
+```bash title="Hardware Inspection Commands"
+# PCI devices (Network cards, GPUs, NVMe controllers)
+lspci -tv
+
+# USB devices connected to host
+lsusb
+
+# System manufacturer, model, and BIOS info
+sudo dmidecode -s system-product-name
+```

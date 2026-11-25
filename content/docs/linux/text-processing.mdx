@@ -1,0 +1,149 @@
+---
+title: Text Processing, Log Wrangling & Streams
+description: Parse production log streams, extract columns with awk, replace strings with sed, sort histograms, and batch with xargs.
+icon: FileCode
+---
+
+Text transformation and pipeline utilities form the backbone of Linux administration and log analysis. These commands allow you to extract metrics, reformat configuration files, and batch operations directly in the shell.
+
+---
+
+## 1. Advanced Stream Filtering with `grep`
+
+Filter log streams and configuration files with extended regex and context:
+
+```bash title="Extended Regex & Multi-Pattern Match"
+# Match multiple patterns with OR syntax (-E)
+grep -E "(ERROR|FATAL|Exception)" /var/log/application.log
+
+# Invert match: strip out commented lines (#) and blank lines
+grep -v "^#" /etc/nginx/nginx.conf | grep -v "^$"
+```
+
+```bash title="Count Matches & View Context"
+# Count total occurrences of 502 Bad Gateway
+grep -c " 502 " access.log
+
+# Show match with line number and 2 lines of preceding and following context
+grep -n -C 2 "connection reset by peer" /var/log/syslog
+```
+
+---
+
+## 2. Column Extraction & Arithmetic with `awk`
+
+`awk` is a complete pattern-scanning and text-processing language ideal for delimited tables and log files:
+
+```bash title="Extract Columns (Whitespace-delimited)"
+# Print 1st column (client IP) and 7th column (HTTP path) from Nginx access log
+awk '{print $1, $7}' /var/log/nginx/access.log
+
+# Custom delimiter (-F): Extract usernames and home directories from /etc/passwd
+awk -F: '{print $1, $6}' /etc/passwd
+```
+
+```bash title="Conditional Filtering & Aggregations"
+# Print requests where HTTP status code ($9) is 500 or higher
+awk '$9 >= 500 {print $1, $7, $9}' /var/log/nginx/access.log
+
+# Sum all numbers in the first column and print total
+cat sizes.txt | awk '{sum += $1} END {print "Total:", sum}'
+```
+
+---
+
+## 3. Stream Editing & In-Place Replacement (`sed`)
+
+Modify configuration files and streams non-interactively:
+
+```bash title="Find and Replace in File (sed -i)"
+# Replace all instances of 'localhost' with '127.0.0.1' in-place
+sed -i 's/localhost/127.0.0.1/g' config.env
+
+# Create a backup before modifying (.bak)
+sed -i.bak 's/DEBUG=true/DEBUG=false/g' production.env
+```
+
+```bash title="Delete Specific Lines"
+# Delete blank lines
+sed -i '/^$/d' list.txt
+
+# Delete lines containing a specific pattern
+sed -i '/deprecated_module/d' settings.py
+
+# Print only lines 10 through 25
+sed -n '10,25p' /var/log/messages
+```
+
+---
+
+## 4. Sorting & Frequency Counting (`sort` / `uniq`)
+
+Calculate frequency distributions, find duplicate entries, and rank traffic:
+
+```bash title="Top 10 Requesting IPs (Access Log Histogram)"
+# Extract IP, sort alphabetically, count occurrences, sort numerically descending
+awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -nr | head -n 10
+```
+
+```bash title="Deduplication & File Comparison"
+# Extract unique lines only
+sort input.txt | uniq > unique.txt
+
+# Show only lines that appear more than once (duplicates)
+sort usernames.txt | uniq -d
+```
+
+---
+
+## 5. Batch Parallel Pipelines with `xargs`
+
+Read lines from standard input and construct parallel command executions:
+
+```bash title="Parallel Execution with xargs (-P)"
+# Compress all .log files in parallel across 4 CPU cores
+find /var/log -type f -name "*.log" | xargs -P 4 -I {} gzip {}
+```
+
+```bash title="Safe Whitespace Handling (-0)"
+# Handle filenames containing spaces safely using null delimiters
+find . -type f -name "*.tmp" -print0 | xargs -0 rm -v
+```
+
+```bash title="Batch Git Branch Cleanup"
+# Delete all merged local git branches except main and master
+git branch --merged | grep -v -E "(^\*|master|main)" | xargs git branch -d
+```
+
+---
+
+## 6. Structured JSON Parsing with `jq`
+
+Parse, slice, filter, and format JSON payloads returned by APIs or CLI tools:
+
+```bash title="Filter and Extract JSON Fields"
+# Pretty-print raw JSON string or API response
+curl -s https://api.github.com/repos/facebook/react | jq '.'
+
+# Extract specific keys from an array of objects
+curl -s https://api.github.com/users/octocat/repos | jq '.[0] | {name: .name, stars: .stargazers_count}'
+```
+
+```bash title="Select by Condition"
+# Filter objects where star count is greater than 1000
+curl -s https://api.example.com/items | jq '.items[] | select(.price > 100) | .title'
+```
+
+---
+
+## 7. Stream Multiplexing with `tee`
+
+Duplicate standard input to both display on screen and append to a file (especially useful with `sudo`):
+
+```bash title="Append to Privileged Files with sudo tee"
+# Redirect output to a root-owned file without opening an interactive root shell
+echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
+
+# Reload sysctl without rebooting
+sudo sysctl -p
+```

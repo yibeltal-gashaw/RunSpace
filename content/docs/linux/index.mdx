@@ -1,0 +1,67 @@
+---
+title: Linux CLI Overview
+description: Operational reference, performance auditing, process lifecycle, networking, text wrangling, and system security for Linux systems.
+icon: Terminal
+---
+
+Welcome to the **Linux CLI** operational reference for RunSpace. This section delivers battle-tested, copy-pasteable commands and workflows engineered for daily backend development, server administration, container host debugging, and incident response.
+
+---
+
+## Sub-Modules
+
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6">
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/linux/system-resources">1. System & Hardware Resources</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">RAM & swap exhaustion, disk space and inode tracking, CPU load averages, and kernel OOM killer events.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/linux/process-management">2. Process & Service Control</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Locating hung processes, graceful vs force kills, systemd service lifecycle, and journalctl log streams.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/linux/filesystem-search">3. Filesystem & Deep Search</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Advanced find by size and time, regex grep / ripgrep, chmod/chown octal rules, and rsync transfers.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/linux/network-troubleshooting">4. Network Troubleshooting</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Listening port discovery (ss / lsof), netcat TCP handshakes, DNS queries (dig), curl profiling, and UFW firewall.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/linux/text-processing">5. Text Processing & Streams</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Log analysis with awk, inline replacements with sed, frequency histograms with sort/uniq, and xargs pipelines.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/linux/users-security">6. Users & Security Hardening</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Sudoers configurations, SSH key deployment & strict permissions, active sessions, and SUID binary audits.</p>
+  </div>
+</div>
+
+---
+
+## Emergency Triage Cheat Sheet
+
+Quick one-liners for common server incidents:
+
+| Incident / Symptom | Quick Triage Command | Purpose |
+| :--- | :--- | :--- |
+| **Disk is 100% full** | `df -h && du -ahx / \| sort -rh \| head -n 20` | Identify saturated partitions and top 20 storage hogs. |
+| **Server frozen / 100% CPU** | `top -b -n 1 \| head -n 20` or `htop` | Pinpoint rogue processes pegging the CPU. |
+| **Out of Memory crash** | `dmesg -T \| grep -i -E "oom\|killed process"` | Confirm if the Linux kernel OOM Killer terminated processes. |
+| **Port conflict (`EADDRINUSE`)** | `ss -tulpn \| grep :<port>` or `lsof -i :<port>` | Find the PID holding the network socket. |
+| **Kill process locking port** | `kill -9 $(lsof -t -i:<port>)` | Immediately free up the locked port. |
+| **Follow service crash logs** | `journalctl -u <service> -f -n 100 --no-pager` | Stream the latest unit logs without opening a pager. |
+| **Top traffic source in logs** | `awk '{print $1}' access.log \| sort \| uniq -c \| sort -nr \| head -n 10` | Find top IP addresses hitting an Nginx/Apache endpoint. |
+| **Test remote TCP socket** | `nc -zv <host> <port>` | Verify reachability without establishing a full application session. |

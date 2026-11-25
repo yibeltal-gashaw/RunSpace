@@ -1,0 +1,154 @@
+---
+title: Filesystem Search, Permissions & Archives
+description: Deep find operations, regex grep/ripgrep, octal permission management, sticky bits, and rsync synchronization.
+icon: FolderTree
+---
+
+Comprehensive workflows for finding files across deep hierarchies, auditing permissions, creating compressed archives, and synchronizing directories safely.
+
+---
+
+## 1. Deep File Search with `find`
+
+The `find` utility traverses directory trees and filters files by metadata, timestamps, size, and permissions:
+
+```bash title="Find by Name and Type"
+# Case-insensitive search for config files in /etc
+sudo find /etc -type f -iname "*.conf"
+
+# Search for directories named 'logs'
+find . -type d -name "logs"
+```
+
+```bash title="Find by Size and Modification Time"
+# Find files larger than 100MB in the current directory tree
+find . -type f -size +100M -exec ls -lh {} +
+
+# Find files modified within the last 24 hours (1 day)
+find /var/log -type f -mtime -1
+
+# Find files older than 30 days and delete them (safe log rotation)
+find /var/log/custom-apps -type f -name "*.log" -mtime +30 -delete
+```
+
+```bash title="Exclude Directories (.git, node_modules)"
+# Prune heavy directories from search tree
+find . -type d \( -name .git -o -name node_modules \) -prune -o -name "*.json" -print
+```
+
+---
+
+## 2. Fast Content Search (`grep` / `ripgrep`)
+
+Locate specific code strings, environment variables, or error traces inside text files:
+
+```bash title="Recursive Grep with Exclusions"
+# Recursively search text, showing line numbers, ignoring case, excluding noisy folders
+grep -rnEI --exclude-dir={.git,node_modules,dist,build} "DATABASE_URL" .
+
+# Display 3 lines before and after matches (context lines)
+grep -rnC 3 "NullPointerException" /var/log/app/
+```
+
+```bash title="List Only Filenames with Matches"
+# Print only names of matching files
+grep -rli "SECRET_KEY" /etc/
+```
+
+```bash title="Modern Fast Search (ripgrep / rg)"
+# ripgrep respects .gitignore automatically and is significantly faster
+rg -i "payment_failed" ./src/
+```
+
+---
+
+## 3. File Permissions & Octal Modes (`chmod`)
+
+Control read (`4`), write (`2`), and execute (`1`) permissions for User, Group, and Others:
+
+| Mode | User (Owner) | Group | Others | Common Use Case |
+| :--- | :--- | :--- | :--- | :--- |
+| **`755`** | `rwx` (7) | `r-x` (5) | `r-x` (5) | Standard executable scripts and public directories |
+| **`644`** | `rw-` (6) | `r--` (4) | `r--` (4) | Standard readable configuration files, web documents |
+| **`600`** | `rw-` (6) | `---` (0) | `---` (0) | Private files, `.env` configs, database passwords |
+| **`400`** | `r--` (4) | `---` (0) | `---` (0) | Read-only private SSH keys (`id_rsa`, `id_ed25519`) |
+| **`700`** | `rwx` (7) | `---` (0) | `---` (0) | Private directories (e.g., `~/.ssh`) |
+
+```bash title="Safe Recursive Permission Split"
+# Set directories to 755 (accessible) and files to 644 (readable) separately
+find /var/www/html -type d -exec chmod 755 {} +
+find /var/www/html -type f -exec chmod 644 {} +
+
+# Secure private SSH key file permissions
+chmod 400 ~/.ssh/id_ed25519
+chmod 700 ~/.ssh
+```
+
+---
+
+## 4. Ownership & Immutable Attributes (`chown` / `chattr`)
+
+Change file user/group associations and lock critical files from accidental deletion:
+
+```bash title="Recursive Ownership Transfer"
+# Assign ownership of web root to www-data user and group
+sudo chown -R www-data:www-data /var/www/app
+
+# Transfer ownership of a single directory
+sudo chown user:docker /var/run/docker.sock
+```
+
+```bash title="Immutable File Protection (chattr)"
+# Lock a file so even root cannot modify, overwrite, or delete it
+sudo chattr +i /etc/resolv.conf
+
+# View file attributes to verify the immutable bit
+lsattr /etc/resolv.conf
+
+# Unlock the file when modification is required
+sudo chattr -i /etc/resolv.conf
+```
+
+---
+
+## 5. Archive Packaging & Extraction (`tar`)
+
+Create and unpack gzip or bzip2 compressed archives:
+
+```bash title="Tar Cheat Sheet (czvf / xzvf)"
+# Create a gzip compressed archive of a folder
+tar -czvf app-backup-$(date +%F).tar.gz /var/www/app
+
+# Extract an archive into the current directory
+tar -xzvf app-backup-2026-11-25.tar.gz
+
+# Extract into a specific destination directory
+tar -xzvf archive.tar.gz -C /opt/deployed/
+
+# Preview archive contents without extracting
+tar -tvf archive.tar.gz
+```
+
+**Mnemonic Breakdown:**
+- `-c`: **C**reate archive
+- `-x`: E**x**tract archive
+- `-z`: G**z**ip compression (`.tar.gz`)
+- `-v`: **V**erbose file listing
+- `-f`: **F**ile target
+
+---
+
+## 6. High-Performance Sync (`rsync`)
+
+Safely transfer and mirror directories locally or across SSH connections with resumable progress:
+
+```bash title="Local Directory Mirroring"
+# Sync src to dest: archive mode (-a), verbose (-v), compress (-z), show progress (-P)
+rsync -avzP --delete /var/www/src/ /var/backup/www/
+```
+*(Notice the trailing slash on `src/`: copies contents inside `src/`. Without trailing slash, copies the `src` directory itself.)*
+
+```bash title="Remote SSH Synchronization"
+# Push local folder to remote server over SSH on custom port 2222
+rsync -avzP -e 'ssh -p 2222' ./dist/ deploy@server.internal:/var/www/html/
+```

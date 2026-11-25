@@ -1,0 +1,173 @@
+---
+title: Network Troubleshooting & Port Probing
+description: Identify listening sockets, perform TCP handshakes, debug DNS records, test HTTP endpoints with curl, and inspect firewalls.
+icon: Network
+---
+
+Essential CLI techniques for diagnosing connectivity failures, socket collisions, DNS delays, latency spikes, and host firewall rules.
+
+---
+
+## 1. Socket & Port Listener Inspection (`ss` / `lsof`)
+
+Determine which process or container is holding a local network port:
+
+```bash title="Query Listening Ports with ss"
+# List all TCP listening sockets with process name and PID
+sudo ss -tulpn
+
+# Filter for a specific port (e.g., 3000, 8080, 5432)
+sudo ss -tulpn | grep -E ":(3000|8080|5432)"
+```
+
+**Flag Summary for `ss -tulpn`:**
+- `-t`: **T**CP sockets
+- `-u`: **U**DP sockets
+- `-l`: **L**istening sockets only
+- `-p`: Show **P**rocess / PID holding the socket
+- `-n`: **N**umeric port resolution (prevents DNS lag)
+
+```bash title="Find and Kill Locked Port (lsof)"
+# Locate PID listening on port 8080
+sudo lsof -i :8080
+
+# One-liner to forcefully terminate process locking port 8080
+sudo kill -9 $(sudo lsof -t -i:8080)
+```
+
+---
+
+## 2. TCP Port Connectivity Tests (`nc` / `telnet`)
+
+Test if a remote port is reachable and accepting TCP handshakes without triggering an application session:
+
+```bash title="Netcat (nc) Port Handshake"
+# Test TCP connection to host on port 443 with a 3-second timeout
+nc -zv -w 3 api.github.com 443
+
+# Scan a range of ports (e.g. 80 through 85)
+nc -zv -w 2 192.168.1.100 80-85
+```
+
+```bash title="Native Bash TCP Probe (No tools needed)"
+# Pure bash check if a remote host:port is reachable
+(echo > /dev/tcp/1.1.1.1/53) >/dev/null 2>&1 && echo "Port Open" || echo "Port Closed"
+```
+
+---
+
+## 3. DNS Diagnostics & Propagation (`dig` / `nslookup`)
+
+Query DNS record types (`A`, `CNAME`, `MX`, `TXT`) and identify slow or poisoned resolvers:
+
+```bash title="DNS Querying with dig"
+# Query A record using local system resolver
+dig example.com
+
+# Short answer only (returns just the resolved IP)
+dig +short api.runspace.internal
+
+# Query specific public DNS server directly (bypassing local cache)
+dig @1.1.1.1 example.com +short
+dig @8.8.8.8 example.com MX
+```
+
+```bash title="Reverse DNS & Trace"
+# Reverse DNS lookup (IP to hostname)
+dig -x 8.8.8.8 +short
+
+# Trace full iterative delegation path from root nameservers
+dig +trace example.com
+```
+
+---
+
+## 4. HTTP Endpoint Testing (`curl`)
+
+Inspect HTTP headers, test payloads, follow redirects, and calculate connection latency breakdown:
+
+```bash title="Inspect HTTP Response Headers"
+# Fetch headers only, follow redirects (-L), silent progress (-s)
+curl -ILs https://httpbin.org/get
+
+# Verbose output showing TLS handshake and SSL certificate details
+curl -Iv https://api.stripe.com
+```
+
+```bash title="POST Request with JSON Payload"
+# Send POST request with JSON headers and body
+curl -s -X POST https://api.example.com/v1/auth \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"username": "admin", "tenant": "prod"}'
+```
+
+```bash title="Connection Timing Profiling"
+# Profile DNS, TCP handshake, TLS negotiation, and TTFB latency
+curl -w "\nDNS: %{time_namelookup}s\nConnect: %{time_connect}s\nTLS: %{time_appconnect}s\nTTFB: %{time_starttransfer}s\nTotal: %{time_total}s\n" \
+  -o /dev/null -s https://google.com
+```
+
+---
+
+## 5. Network Interfaces & Routing Table (`ip`)
+
+Manage IP addresses, interfaces, and gateway routes (`iproute2` suite replacing legacy `ifconfig` / `route`):
+
+```bash title="Display Interfaces and IP Addresses"
+# Show all network interfaces with assigned IPv4 and IPv6 addresses
+ip -c addr
+
+# Show only active interfaces that are UP
+ip link show up
+```
+
+```bash title="Inspect Routing Table & Default Gateway"
+# View system default gateway and routing decisions
+ip route show
+
+# Identify which interface and route will be used to reach a specific IP
+ip route get 8.8.8.8
+```
+
+---
+
+## 6. Path Latency & Packet Loss (`ping` / `mtr`)
+
+Determine whether packet loss is occurring locally, on ISP hops, or at the destination server:
+
+```bash title="Ping with Limit and Interval"
+# Send exactly 5 ICMP packets with 0.5s interval
+ping -c 5 -i 0.5 1.1.1.1
+```
+
+```bash title="Live Path Traceroute (mtr)"
+# mtr combines ping and traceroute into continuous real-time hop analysis
+mtr -rw 1.1.1.1
+
+# Generate a static 10-packet report for documentation
+mtr --report --report-cycles=10 8.8.8.8
+```
+
+---
+
+## 7. Firewall Verification (`ufw` / `iptables`)
+
+Verify host firewall rules and opened ports:
+
+```bash title="Ubuntu / Debian UFW"
+# Check firewall status and rule list
+sudo ufw status verbose
+
+# Allow incoming TCP port 443
+sudo ufw allow 443/tcp
+
+# Delete a rule by line number
+sudo ufw status numbered
+sudo ufw delete 3
+```
+
+```bash title="Raw iptables Inspection"
+# List all active IPv4 iptables filtering rules with packet counters
+sudo iptables -L -n -v --line-numbers
+```

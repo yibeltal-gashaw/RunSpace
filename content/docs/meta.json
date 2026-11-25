@@ -6,8 +6,9 @@
     "wso2",
     "docker",
     "portainer",
+    "linux",
+    "powershell",
     "network",
-    "system",
-    "powershell"
+    "system"
   ]
 }

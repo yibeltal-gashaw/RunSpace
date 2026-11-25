@@ -1,0 +1,13 @@
+{
+  "title": "Linux CLI",
+  "pages": [
+    "index",
+    "---Operations---",
+    "system-resources",
+    "process-management",
+    "filesystem-search",
+    "network-troubleshooting",
+    "text-processing",
+    "users-security"
+  ]
+}

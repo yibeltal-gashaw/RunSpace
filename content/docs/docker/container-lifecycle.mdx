@@ -1,0 +1,190 @@
+---
+title: Container Lifecycle & Execution
+description: Complete CLI reference for container execution, execution attach, process inspection, filesystem diffs, and resource updates.
+icon: Box
+---
+
+Comprehensive operational guide covering all Docker container management and execution commands: `run`, `create`, `start`, `stop`, `restart`, `kill`, `rm`, `pause`, `unpause`, `wait`, `exec`, `attach`, `top`, `stats`, `port`, `diff`, `cp`, `rename`, and `update`.
+
+---
+
+## 1. Running & Creating Containers (`run`, `create`)
+
+`docker run` creates and starts a container in a single step, while `docker create` prepares the container filesystem and network without starting it.
+
+```bash title="Production Container Launch (docker run)"
+# Run a detached, isolated container with resource limits, healthcheck, and auto-restart:
+docker run -d \
+  --name web-api \
+  --restart unless-stopped \
+  -p 8080:80 \
+  -e NODE_ENV=production \
+  -e PORT=80 \
+  --cpus="1.5" \
+  --memory="512m" \
+  --memory-reservation="256m" \
+  --health-cmd="curl -f http://localhost/health || exit 1" \
+  --health-interval=10s \
+  --health-timeout=3s \
+  --health-retries=3 \
+  -v app-data:/app/data \
+  --log-driver json-file \
+  --log-opt max-size=10m \
+  --log-opt max-file=3 \
+  nginx:alpine
+```
+
+```bash title="Ephemeral Interactive Debug Container"
+# Launch disposable container with TTY that cleans itself up upon exit (--rm):
+docker run -it --rm \
+  --network host \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  alpine:latest sh
+```
+
+```bash title="Create Container Without Starting (docker create)"
+# Pre-configure container configuration and filesystem without invoking entrypoint:
+docker create \
+  --name worker-service \
+  --restart on-failure:5 \
+  -m 256m \
+  python:3.11-slim python -m worker.main
+```
+
+---
+
+## 2. Stopping, Restarting & Killing (`stop`, `restart`, `kill`)
+
+```bash title="Graceful vs Immediate Termination"
+# Graceful stop: Sends SIGTERM, waits 15 seconds, then sends SIGKILL:
+docker stop -t 15 web-api
+
+# Immediate kill: Sends SIGKILL directly (or custom signal e.g. SIGHUP for reload):
+docker kill web-api
+docker kill --signal=SIGHUP nginx-proxy
+
+# Restart running or stopped container (graceful shutdown then start):
+docker restart -t 10 web-api
+
+# Restart all running containers in parallel:
+docker restart $(docker ps -q)
+```
+
+---
+
+## 3. Freezing Processes & Waiting (`pause`, `unpause`, `wait`)
+
+`pause` uses the Linux cgroups freezer to suspend all processes in the container without releasing memory or breaking socket states.
+
+```bash title="Pause, Unpause and Block Until Exit"
+# Freeze all threads in the container:
+docker pause web-api
+
+# Unfreeze and resume container execution:
+docker unpause web-api
+
+# Block execution until container terminates, then output the integer exit code:
+docker wait web-api
+```
+
+---
+
+## 4. Deleting Containers (`rm`)
+
+```bash title="Container Cleanup Recipes"
+# Remove a stopped container:
+docker rm web-api
+
+# Force remove a running container (sends SIGKILL):
+docker rm -f web-api
+
+# Remove container along with its anonymous volumes (-v):
+docker rm -v web-api
+
+# Batch purge all non-running (exited) containers:
+docker rm $(docker ps -a -q -f status=exited)
+```
+
+---
+
+## 5. Live Execution & Attaching (`exec`, `attach`)
+
+```bash title="Execute Commands Inside Running Container (docker exec)"
+# Spawn an interactive shell session as root:
+docker exec -it web-api sh
+
+# Run a non-interactive command as a specific user with environment variables:
+docker exec -u www-data -e DEBUG=1 -w /var/log web-api ls -la
+
+# Test connectivity from inside container:
+docker exec web-api curl -sI http://localhost:80
+```
+
+```bash title="Attach to Container Standard Streams (docker attach)"
+# Attach terminal to running container stdout/stderr:
+# (Press CTRL+P followed by CTRL+Q to detach without terminating the container)
+docker attach --no-stdin web-api
+```
+
+---
+
+## 6. Process & Performance Inspection (`top`, `stats`, `port`)
+
+```bash title="Inspect Container Processes (docker top)"
+# Display running processes inside container mapped to host PIDs:
+docker top web-api
+
+# View process tree using standard ps flags:
+docker top web-api -ef
+```
+
+```bash title="Resource Metrics & Port Bindings"
+# Live resource metrics stream (CPU %, Memory, Net I/O, Block I/O):
+docker stats web-api
+
+# Single snapshot of all running containers without streaming:
+docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
+
+# View port mapping translation between host and container:
+docker port web-api
+docker port web-api 80/tcp
+```
+
+---
+
+## 7. Filesystem Diffs & File Transfers (`diff`, `cp`)
+
+```bash title="Filesystem Change Inspection (docker diff)"
+# Inspect copy-on-write changes made to the container filesystem:
+# A = Added, C = Changed, D = Deleted
+docker diff web-api
+```
+
+```bash title="Bidirectional File Copy (docker cp)"
+# Copy host file into container:
+docker cp ./config.json web-api:/app/config.json
+
+# Extract log file or directory from container to host:
+docker cp web-api:/var/log/nginx ./nginx-logs-backup
+
+# Archive mode: preserve original file UID/GID and timestamps (-a):
+docker cp -a web-api:/etc/ssl/certs ./extracted-certs
+```
+
+---
+
+## 8. Runtime Updates & Renaming (`update`, `rename`)
+
+`docker update` enables altering hardware limits and restart behaviors on a **live, running** container without recreation.
+
+```bash title="Dynamically Update Live Container Specs"
+# Throttle CPU and expand memory limit on the fly:
+docker update --cpus 2.0 --memory 1g --memory-swap 2g web-api
+
+# Change restart policy of an active container:
+docker update --restart unless-stopped web-api
+
+# Rename container handle:
+docker rename web-api web-api-production
+```

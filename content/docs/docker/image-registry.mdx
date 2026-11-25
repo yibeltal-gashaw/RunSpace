@@ -1,0 +1,172 @@
+---
+title: Image Construction & Registries
+description: Complete CLI reference for Docker image builds, Buildx multi-arch compilation, registry operations, image archiving, and layer inspection.
+icon: Layers
+---
+
+Comprehensive operational guide covering all Docker image construction and registry distribution commands: `build`, `builder`, `buildx`, `images`, `rmi`, `tag`, `commit`, `history`, `pull`, `push`, `search`, `login`, `logout`, `save`, `load`, `export`, and `import`.
+
+---
+
+## 1. Building Images (`build`, `buildx`)
+
+Docker BuildKit provides parallel stage execution, secret mounting without layer leakage, build cache mounts, and cross-architecture compilation.
+
+```bash title="BuildKit Multi-Stage Build"
+# Build with BuildKit enabled, injecting build arguments and cache mount:
+DOCKER_BUILDKIT=1 docker build \
+  -t myorg/backend:v1.4.0 \
+  -t myorg/backend:latest \
+  -f Dockerfile.prod \
+  --build-arg NODE_ENV=production \
+  --build-arg COMMIT_SHA=$(git rev-parse --short HEAD) \
+  --target production \
+  --no-cache=false \
+  .
+```
+
+```bash title="Multi-Platform Build with Buildx"
+# Create a builder instance supporting multi-architecture emulation:
+docker buildx create --name multi-builder --use --bootstrap
+
+# Build and push simultaneously for AMD64 (Intel/AMD) and ARM64 (Apple Silicon / Graviton):
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t myorg/app:2.0.0 \
+  -t myorg/app:latest \
+  --push \
+  .
+
+# Prune buildx build cache to reclaim disk space:
+docker buildx prune -a --force
+```
+
+---
+
+## 2. Image Inventory & Layer Inspection (`images`, `history`)
+
+```bash title="List Images with Filtering"
+# List all images including SHA-256 digests:
+docker images --digests
+
+# Filter dangling (unnamed/untagged <none>) images:
+docker images -f "dangling=true"
+
+# Custom table format showing repository, tag, digest, and virtual size:
+docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Digest}}\t{{.Size}}"
+```
+
+```bash title="Layer History Audit (docker history)"
+# Inspect Dockerfile instructions, layer sizes, and creation timestamps:
+docker history --no-trunc myorg/backend:v1.4.0
+
+# Identify which layers contribute the most disk weight:
+docker history myorg/backend:v1.4.0 --format "table {{.Size}}\t{{.CreatedBy}}" | sort -hr | head -n 15
+```
+
+---
+
+## 3. Tagging & Removing Images (`tag`, `rmi`)
+
+```bash title="Tagging for Custom Registries"
+# Tag local image for Docker Hub:
+docker tag my-app:latest username/my-app:1.2.0
+
+# Tag for private registry (e.g. AWS ECR or Harbor):
+docker tag my-app:latest 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:1.2.0
+```
+
+```bash title="Safe Image Deletion Recipes"
+# Remove image by name or ID:
+docker rmi myorg/backend:v1.4.0
+
+# Force remove image even if referenced by stopped containers:
+docker rmi -f myorg/backend:v1.4.0
+
+# Batch purge all untagged dangling images:
+docker rmi $(docker images -f "dangling=true" -q)
+```
+
+---
+
+## 4. Committing Container State (`commit`)
+
+`docker commit` saves the current state of a container's writable layer into a brand-new Docker image. Ideal for capturing state during hotfix investigations.
+
+```bash title="Snapshot Live Container into Image"
+# Pause container during snapshot, set commit message, author, and entrypoint:
+docker commit \
+  --author "DevOps Team <devops@example.com>" \
+  --message "Installed curl and updated SSL cert bundle for triage" \
+  --change "ENV TRIAGE_MODE=true" \
+  web-api \
+  myorg/web-api:triage-snapshot-20261125
+```
+
+---
+
+## 5. Registry Authentication & Hub Discovery (`login`, `search`, `pull`, `push`)
+
+```bash title="Registry Authentication"
+# Login to Docker Hub via stdin token (avoids shell history leaks):
+echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+# Login to GitHub Packages (GHCR):
+echo "$CR_PAT" | docker login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
+
+# Log out from registry:
+docker logout ghcr.io
+```
+
+```bash title="Search Docker Hub from Terminal"
+# Query official images with at least 100 stars:
+docker search --filter "is-official=true" --filter "stars=100" redis
+
+# Format search results to display name, stars, and automated build status:
+docker search --format "table {{.Name}}\t{{.StarCount}}\t{{.IsOfficial}}" postgres
+```
+
+```bash title="Pulling and Pushing Images"
+# Pull by explicit tag:
+docker pull redis:7.2-alpine
+
+# Pull by immutable cryptographic digest (guarantees exact binary artifact):
+docker pull redis@sha256:4d60c2d3080702d73be1e231b51e5008cf20295ebfeea0ef1c6da4720993d08f
+
+# Push image to remote registry:
+docker push myorg/backend:v1.4.0
+```
+
+---
+
+## 6. Image Archiving vs Container Exporting (`save`/`load` vs `export`/`import`)
+
+Understanding the distinction is critical for air-gapped infrastructure:
+
+| Operation | Command | Preserves Layers & History? | Preserves Metadata / Entrypoint? | Target Object |
+| :--- | :--- | :--- | :--- | :--- |
+| **Image Archive** | `docker save` / `load` | **Yes** (All image layers preserved) | **Yes** (`CMD`, `ENV`, `ENTRYPOINT` kept) | Docker Image |
+| **Filesystem Snapshot** | `docker export` / `import` | **No** (Flattens into single layer) | **No** (Metadata stripped; must re-specify) | Active Container |
+
+```bash title="Air-Gapped Transport with docker save & load"
+# Save multiple images into a single compressed tar archive:
+docker save -o release-bundle.tar nginx:alpine redis:7.2-alpine postgres:16-alpine
+gzip release-bundle.tar
+
+# Stream save output directly to remote server via SSH:
+docker save myorg/backend:latest | ssh user@airgapped-host "docker load"
+
+# Load image archive on target machine:
+docker load -i release-bundle.tar.gz
+```
+
+```bash title="Flatten Container with docker export & import"
+# Export container's root filesystem into a tarball (removes layer history):
+docker export web-api > web-api-fs.tar
+
+# Import tarball back as a clean base image, specifying new entrypoint and environment:
+cat web-api-fs.tar | docker import \
+  --change "ENV PATH=/usr/local/bin:/usr/bin:/bin" \
+  --change "ENTRYPOINT [\"/app/server\"]" \
+  - myorg/web-api:flattened
+```

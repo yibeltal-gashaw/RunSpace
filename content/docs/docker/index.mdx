@@ -1,52 +1,96 @@
 ---
-title: Docker Overview
-description: Container lifecycle, image cleanup, inspection & runtime debugging.
+title: Docker CLI Reference
+description: Complete reference for Docker CLI commands, management commands, global daemon options, and container runtime operations.
 icon: Container
 ---
 
-Docker provides containerized application execution with kernel-level isolation. This section provides verified CLI commands for container lifecycle maintenance, real-time log monitoring, and compose orchestration.
+Docker provides containerized application execution with kernel-level cgroups and namespace isolation. This section provides an end-to-end operational guide for every command in the Docker CLI suite—including container lifecycle, BuildKit image construction, storage volumes, software-defined networks, multi-host Swarm orchestration, and remote daemon contexts.
 
 ---
 
-## Sub-Categories
+## Command Categories & Quick Navigation
 
-Select an operational focus to view specialized command snippets:
-
-<div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6">
   <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
     <h3 className="text-base font-semibold text-fd-foreground mb-1">
-      <a href="/docs/docker/installation">1. Installation</a>
+      <a href="/docs/docker/container-lifecycle">1. Container Lifecycle & Execution</a>
     </h3>
-    <p className="text-xs text-fd-muted-foreground">Automated installation scripts, user group permissions, and health checks.</p>
+    <p className="text-xs text-fd-muted-foreground">`run`, `create`, `start`, `stop`, `restart`, `kill`, `rm`, `pause`, `unpause`, `wait`, `exec`, `attach`, `top`, `stats`, `port`, `diff`, `cp`, `rename`, and `update`.</p>
   </div>
   <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
     <h3 className="text-base font-semibold text-fd-foreground mb-1">
-      <a href="/docs/docker/logs">2. Logs & Diagnostics</a>
+      <a href="/docs/docker/image-registry">2. Image Construction & Registries</a>
     </h3>
-    <p className="text-xs text-fd-muted-foreground">Real-time log tailing, container event bus monitoring, and JSON log paths.</p>
+    <p className="text-xs text-fd-muted-foreground">`build`, `buildx`, `images`, `rmi`, `tag`, `commit`, `history`, `pull`, `push`, `search`, `login`, `logout`, `save`, `load`, `export`, and `import`.</p>
   </div>
   <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
     <h3 className="text-base font-semibold text-fd-foreground mb-1">
-      <a href="/docs/docker/deployment">3. Deployment & Prune</a>
+      <a href="/docs/docker/storage-network">3. Volumes & Networking</a>
     </h3>
-    <p className="text-xs text-fd-muted-foreground">Docker Compose recreation, deep system cleanup, and live resource stats.</p>
+    <p className="text-xs text-fd-muted-foreground">`volume` management, bind mounts, tmpfs, backup/restore, `network` bridge/overlay drivers, DNS service discovery, connect/disconnect.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/docker/system-context">4. System & Remote Contexts</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">`system df`, deep `prune`, `context` over SSH/mTLS, `trust` signing, `manifest` multi-arch lists, `plugin`, and global daemon options (`-H`, `-c`, `-D`, `-l`).</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/docker/swarm-orchestration">5. Swarm & Stack Orchestration</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">`swarm` cluster init/join, `node` maintenance/drain, `service` replication/rolling updates, `stack` compose deploy, `secret`, and `config`.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/docker/logs">6. Logs & Diagnostics</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Streaming logs with `docker logs`, daemon event bus filtering (`docker events`), JSON log path extraction, and Go template formatting.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/docker/deployment">7. Compose Deployment</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Docker Compose stack recreation (`--force-recreate`), IP inspection, and live container resource metrics.</p>
+  </div>
+  <div className="p-4 rounded-xl border border-fd-border bg-fd-card">
+    <h3 className="text-base font-semibold text-fd-foreground mb-1">
+      <a href="/docs/docker/installation">8. Installation & Setup</a>
+    </h3>
+    <p className="text-xs text-fd-muted-foreground">Automated installation scripts, user group permissions (`usermod -aG docker`), engine bootstrap, and health checks.</p>
   </div>
 </div>
 
 ---
 
-## Quick Reference Cheat Sheet
+## Global CLI Options Reference
 
-```bash title="Quick Common Commands"
-# Check running containers
-docker ps
+All Docker commands accept these root-level flags before the sub-command:
 
-# Check all containers including stopped
-docker ps -a
+| Option | Syntax | Purpose |
+| :--- | :--- | :--- |
+| **Client Config** | `--config string` | Path to client configuration directory (defaults to `~/.docker`). |
+| **Daemon Context** | `-c, --context string` | Select a named daemon connection context (overrides `DOCKER_HOST` env). |
+| **Debug Mode** | `-D, --debug` | Enable verbose client-to-daemon communication debugging output. |
+| **Daemon Socket** | `-H, --host list` | Target UNIX socket (`unix:///var/run/docker.sock`), TCP (`tcp://host:2376`), or SSH (`ssh://user@host`). |
+| **Log Level** | `-l, --log-level string` | Client logging threshold: `debug`, `info`, `warn`, `error`, `fatal` (default: `info`). |
+| **mTLS Security** | `--tlsverify` | Enforce mutual TLS validation against `--tlscacert`, `--tlscert`, and `--tlskey`. |
+| **CLI Version** | `-v, --version` | Print Docker client version details and exit. |
 
-# View container resource stats
-docker stats --no-stream
+---
 
-# Follow logs of a container
-docker logs -f --tail 50 <container_id>
-```
+## Complete Docker Command Matrix
+
+| CLI Category | Commands Included | Primary Use Cases |
+| :--- | :--- | :--- |
+| **Container Execution** | `run`, `create`, `start`, `stop`, `restart`, `kill`, `rm`, `pause`, `unpause`, `wait` | Starting, stopping, freezing, auto-restarting, and deleting runtime containers. |
+| **Container Triage** | `exec`, `attach`, `top`, `stats`, `port`, `diff`, `cp`, `rename`, `update` | Interactive shells, live resource monitoring, port inspection, filesystem diffs, dynamic hardware limits. |
+| **Image Construction** | `build`, `builder`, `buildx`, `commit`, `history` | Multi-stage Dockerfile builds, BuildKit caching, multi-arch builds (`amd64`/`arm64`), layer size auditing. |
+| **Image Distribution** | `images`, `rmi`, `tag`, `pull`, `push`, `search`, `login`, `logout` | Registry authentication, layer tagging, pulling by digest, pushing to Docker Hub, GHCR, or private ECR. |
+| **Air-Gap & Tarballs** | `save`, `load`, `export`, `import` | Layered image archive bundling vs flat container filesystem snapshots for offline systems. |
+| **Persistent Storage** | `volume` (`create`, `ls`, `inspect`, `rm`, `prune`) | Managed named volumes, bind mounts, in-memory `tmpfs`, automated backup/restore tar archives. |
+| **Networking** | `network` (`create`, `ls`, `inspect`, `connect`, `disconnect`, `rm`, `prune`) | Bridge subnets, host mode, overlay networks, hot-plugging interfaces, container DNS resolution. |
+| **System Management** | `system` (`df`, `prune`, `info`, `events`), `inspect`, `version` | Reclaiming disk space, inspecting daemon architecture, streaming crash events in real-time. |
+| **Remote Contexts** | `context` (`create`, `use`, `ls`, `inspect`) | Switching between local Docker Desktop and remote production virtual machines via SSH. |
+| **Clustering & Swarm** | `swarm`, `node`, `service`, `stack`, `secret`, `config` | Multi-host node clustering, replicated services, rolling updates, compose stack deploys, secrets mounting. |
+| **Trust & Extensions** | `trust`, `manifest`, `plugin` | Digital image signing with Notary, multi-arch manifest lists, third-party storage/network plugins. |

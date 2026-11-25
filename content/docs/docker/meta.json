@@ -5,6 +5,14 @@
     "---Operations---",
     "installation",
     "logs",
-    "deployment"
+    "deployment",
+    "---Core Workflows---",
+    "container-lifecycle",
+    "image-registry",
+    "storage-network",
+    "---System & Architecture---",
+    "system-context",
+    "swarm-orchestration"
+    
   ]
 }

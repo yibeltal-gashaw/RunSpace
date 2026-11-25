@@ -1,0 +1,164 @@
+---
+title: System, Contexts & Remote Daemons
+description: Complete CLI reference for global Docker options, remote daemon SSH contexts, mutual TLS security, system disk triage, and image trust.
+icon: Settings
+---
+
+Comprehensive operational guide covering global Docker client options and daemon architecture: `--config`, `--context`, `--host`, `--debug`, `--log-level`, `--tlsverify`, `system` (`df`, `prune`, `info`, `events`), `context` (`create`, `use`, `ls`, `inspect`), `trust`, `manifest`, and `plugin`.
+
+---
+
+## 1. Global CLI Options & Remote Daemons
+
+Docker client commands can target local or remote daemons via UNIX domain sockets, remote TCP ports with mTLS, or encrypted SSH tunnels.
+
+```bash title="Global Flags & Daemon Connection Syntax"
+# Target remote host over SSH without password prompts (uses host SSH key):
+docker -H ssh://deployer@192.168.1.100 ps
+
+# Target remote daemon via TCP with Mutual TLS (mTLS) certificate verification:
+docker \
+  --tlsverify \
+  --tlscacert=/etc/docker/certs/ca.pem \
+  --tlscert=/etc/docker/certs/client-cert.pem \
+  --tlskey=/etc/docker/certs/client-key.pem \
+  -H tcp://10.0.0.50:2376 \
+  system info
+
+# Enable verbose client-server communication debugging (-D) and set log level:
+docker -D -l debug ps
+
+# Override custom client configuration directory (defaults to ~/.docker):
+docker --config /opt/ci/docker-config build -t app:ci .
+
+# Display version information:
+docker version
+docker -v
+```
+
+---
+
+## 2. Managing Docker Contexts (`context`)
+
+Contexts provide a clean abstraction for switching between local Docker Desktop, remote cloud virtual machines, and staging clusters without setting `DOCKER_HOST` environment variables.
+
+```bash title="Context Lifecycle & Remote Switching"
+# List all registered contexts and identify the active target (*):
+docker context ls
+
+# Create an SSH-based context targeting a remote production server:
+docker context create prod-node \
+  --description "Production Ubuntu 24.04 Docker Engine" \
+  --docker "host=ssh://ops@prod.example.com"
+
+# Create a TLS-based TCP context:
+docker context create staging-cluster \
+  --description "Staging Remote Engine with mTLS" \
+  --docker "host=tcp://staging.example.com:2376,ca=/path/ca.pem,cert=/path/cert.pem,key=/path/key.pem"
+
+# Switch your global terminal context to the remote target:
+docker context use prod-node
+
+# Execute single one-off command against a specific context using -c:
+docker -c staging-cluster ps
+
+# Revert back to the default local daemon:
+docker context use default
+
+# Inspect detailed metadata of a context:
+docker context inspect prod-node
+```
+
+---
+
+## 3. System Storage Breakdown & Deep Pruning (`system`)
+
+```bash title="Disk Space Breakdown (docker system df)"
+# View summary table of images, containers, local volumes, and build cache:
+docker system df
+
+# Verbose breakdown listing every individual item and reclaimable byte counts:
+docker system df -v
+```
+
+```bash title="System Pruning Operations (docker system prune)"
+# Safe prune: removes stopped containers, unused networks, and dangling images:
+docker system prune -f
+
+# Aggressive deep prune: purges ALL unreferenced images AND unused volumes:
+# (Warning: this permanently destroys state in volumes not bound to running containers)
+docker system prune -a --volumes -f
+
+# Filtered prune: remove images older than 7 days (168 hours):
+docker system prune -a --filter "until=168h" -f
+```
+
+```bash title="Daemon Information & Event Streaming"
+# Inspect complete daemon architecture: cgroup driver, storage driver, runc version:
+docker system info
+docker info --format '{{.CgroupDriver}} / {{.Driver}}'
+
+# Stream real-time daemon events filtered by image or container:
+docker system events --filter 'type=container' --since '1h'
+```
+
+---
+
+## 4. Image Trust & Multi-Arch Manifests (`trust`, `manifest`)
+
+### Docker Content Trust (`trust`)
+
+Docker Content Trust (DCT) enables digital cryptographic signing of container images using Notary, guaranteeing publisher integrity and preventing tampering.
+
+```bash title="Cryptographic Image Signing"
+# Enforce signature verification before running images:
+export DOCKER_CONTENT_TRUST=1
+
+# Generate a signer key pair:
+docker trust key generate ci-signer
+
+# Add signer to repository:
+docker trust signer add --key cert.pem ci-signer myorg/production-app
+
+# Inspect cryptographic signatures and signers on a remote image:
+docker trust inspect --pretty myorg/production-app:latest
+```
+
+### Multi-Architecture Manifests (`manifest`)
+
+```bash title="Assemble & Inspect Multi-Arch Manifest Lists"
+# Inspect the architecture layers supported by an official multi-arch image:
+docker manifest inspect nginx:latest
+
+# Create a unified multi-arch manifest list pointing to platform-specific images:
+docker manifest create myorg/app:3.0.0 \
+  myorg/app:3.0.0-amd64 \
+  myorg/app:3.0.0-arm64
+
+# Annotate architectures explicitly:
+docker manifest annotate myorg/app:3.0.0 myorg/app:3.0.0-arm64 --os linux --arch arm64
+
+# Push multi-arch manifest list to registry:
+docker manifest push myorg/app:3.0.0
+```
+
+---
+
+## 5. Docker Engine Plugins (`plugin`)
+
+Extend Docker daemon functionality with third-party volume drivers, authorization filters, and network mesh overlays.
+
+```bash title="Plugin Operations"
+# List installed plugins:
+docker plugin ls
+
+# Install a volume plugin from Docker Hub (e.g. Rex-Ray for cloud block storage):
+docker plugin install rexray/ebs --grant-all-permissions
+
+# Enable or disable an installed plugin:
+docker plugin enable rexray/ebs
+docker plugin disable rexray/ebs
+
+# Remove plugin:
+docker plugin rm rexray/ebs
+```

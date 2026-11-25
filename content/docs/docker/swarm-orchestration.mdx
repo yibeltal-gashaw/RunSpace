@@ -1,0 +1,164 @@
+---
+title: Swarm, Services & Stack Orchestration
+description: Complete CLI reference for Docker Swarm clusters, node maintenance, service scaling, rolling updates, stack deployments, secrets, and configs.
+icon: Cpu
+---
+
+Comprehensive operational guide covering all Docker clustering and orchestration commands: `swarm`, `node`, `service`, `stack`, `secret`, and `config`.
+
+---
+
+## 1. Initializing & Managing Swarm Clusters (`swarm`)
+
+Docker Swarm provides built-in multi-host clustering, mutual TLS node communication, Raft consensus management, and decentralized routing meshes.
+
+```bash title="Swarm Bootstrap & Membership"
+# Initialize a new Swarm manager node:
+docker swarm init --advertise-addr 192.168.1.10
+
+# Generate token string for joining new worker nodes:
+docker swarm join-token worker
+
+# Generate token string for joining additional manager nodes (high availability):
+docker swarm join-token manager
+
+# Execute on a remote machine to join the cluster as a worker:
+docker swarm join --token SWMTKN-1-49nj... 192.168.1.10:2377
+
+# Leave the swarm (workers):
+docker swarm leave
+
+# Force manager node to leave cluster:
+docker swarm leave --force
+```
+
+---
+
+## 2. Cluster Node Management (`node`)
+
+```bash title="Node Administration & Maintenance"
+# List all nodes in cluster with status, availability, and manager role:
+docker node ls
+
+# Drain node for host kernel maintenance (gracefully migrates all running tasks):
+docker node update --availability drain worker-node-02
+
+# Restore node to active status after maintenance:
+docker node update --availability active worker-node-02
+
+# Promote a worker node to cluster manager:
+docker node promote worker-node-01
+
+# Demote a manager node back to worker:
+docker node demote worker-node-03
+
+# Remove an offline/evicted node from cluster inventory:
+docker node rm worker-node-02
+```
+
+---
+
+## 3. Distributed Services (`service`)
+
+```bash title="Deploying & Scaling Services"
+# Deploy a replicated microservice with rolling update parameters:
+docker service create \
+  --name web-app \
+  --replicas 4 \
+  --publish published=80,target=80,protocol=tcp,mode=ingress \
+  --update-parallelism 2 \
+  --update-delay 10s \
+  --update-failure-action rollback \
+  --rollback-parallelism 2 \
+  --restart-condition any \
+  --network app-overlay \
+  nginx:alpine
+
+# List active services and replica health:
+docker service ls
+
+# View task distribution across nodes:
+docker service ps web-app
+
+# Scale replica count instantly:
+docker service scale web-app=8
+
+# Perform zero-downtime rolling update with new image:
+docker service update --image nginx:1.25-alpine web-app
+
+# Manually trigger automatic rollback to previous configuration:
+docker service rollback web-app
+
+# View aggregate streaming logs across all replicas of a service:
+docker service logs -f --tail 100 web-app
+
+# Delete service:
+docker service rm web-app
+```
+
+---
+
+## 4. Multi-Service Stack Deployments (`stack`)
+
+Docker Stack applies Compose file manifests directly against a Swarm cluster, managing services, overlay networks, and volume definitions declaratively.
+
+```bash title="Stack Deployment Recipes"
+# Deploy or update a stack from a compose file:
+docker stack deploy -c docker-compose.prod.yml production-stack
+
+# List deployed stacks:
+docker stack ls
+
+# List all services belonging to a stack:
+docker stack services production-stack
+
+# View running container tasks across all nodes in the stack:
+docker stack ps production-stack
+
+# Teardown and delete entire stack:
+docker stack rm production-stack
+```
+
+---
+
+## 5. In-Memory Secrets & Dynamic Configurations (`secret`, `config`)
+
+Docker Secrets and Configs are securely stored in the encrypted Raft log of manager nodes and mounted directly into container memory via `/run/secrets/` and `/` without writing to disk.
+
+```bash title="Docker Secrets Management"
+# Create secret from file:
+docker secret create db_password ./db_password.txt
+
+# Create secret from stdin (avoids saving to temporary files):
+echo "super-secret-token" | docker secret create api_token -
+
+# List secrets:
+docker secret ls
+
+# Attach secret to a service:
+docker service create \
+  --name api-server \
+  --secret db_password \
+  --secret api_token \
+  myorg/api:v1
+
+# Remove secret (cannot be attached to running services):
+docker secret rm db_password
+```
+
+```bash title="Docker Configs Management"
+# Create configuration from an Nginx or application config file:
+docker config create nginx_conf ./nginx.conf
+
+# List configs:
+docker config ls
+
+# Inject config into service:
+docker service create \
+  --name frontend-proxy \
+  --config source=nginx_conf,target=/etc/nginx/nginx.conf \
+  nginx:alpine
+
+# Remove config:
+docker config rm nginx_conf
+```

@@ -1,10 +1,10 @@
 ---
 title: Compose & Container Deployment
-description: Compose stacks, resource monitoring & lifecycle pruning.
+description: Compose stacks, resource monitoring, lifecycle pruning, and comprehensive Dockerfile build options with per-parameter examples.
 icon: Rocket
 ---
 
-Manage multi-container application stacks, clean up dangling resources, and inspect networking.
+Manage multi-container application stacks, clean up dangling resources, inspect networking, and optimize Dockerfile builds with advanced runtime compilation flags.
 
 ---
 
@@ -58,4 +58,441 @@ Open an interactive TTY shell session inside a target container for internal fil
 
 ```bash
 docker exec -it <container_id> /bin/sh
+```
+
+---
+
+## 6. Dockerfile Image Build Options (`docker build`)
+
+The `docker build` command builds a container image from a Dockerfile and a context. Below is the complete options matrix covering all 28 configuration flags:
+
+### Build Options Matrix
+
+| Flag | Parameter Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `--add-host` | `list` (`host:ip`) | *(none)* | Injects custom host-to-IP mappings into `/etc/hosts` of build containers. |
+| `--build-arg` | `list` (`KEY=VAL`) | *(none)* | Passes build-time variables into Dockerfile `ARG` instructions. |
+| `--cache-from` | `strings` | *(none)* | Specifies external images to query as cache candidates (ideal for remote CI/CD). |
+| `--cgroup-parent` | `string` | *(none)* | Assigns intermediate build containers to an explicit parent cgroup path. |
+| `--compress` | `boolean` | `false` | Compresses the raw build context directory using gzip before uploading to daemon. |
+| `--cpu-period` | `int` | `100000` | Limits CPU Completely Fair Scheduler (CFS) period interval in microseconds. |
+| `--cpu-quota` | `int` | *(unlimited)* | Limits CPU CFS quota (total allowable CPU time per period interval). |
+| `-c`, `--cpu-shares` | `int` | `1024` | Assigns relative proportional CPU weighting during host resource contention. |
+| `--cpuset-cpus` | `string` | *(all)* | Pins build execution to specific CPU cores (e.g. `0-3` or `0,2`). |
+| `--cpuset-mems` | `string` | *(all)* | Restricts execution to specific NUMA memory nodes (e.g. `0,1`). |
+| `--disable-content-trust` | `boolean` | `true` | Skips image signature validation (Notary). Set `false` to enforce signed base images. |
+| `-f`, `--file` | `string` | `PATH/Dockerfile` | Custom path to the Dockerfile (e.g. `build/Dockerfile.arm64`). |
+| `--force-rm` | `boolean` | `false` | Always destroys intermediate containers even if a `RUN` instruction fails. |
+| `--iidfile` | `string` | *(none)* | Writes the final image SHA-256 digest string to a specified file path. |
+| `--isolation` | `string` | `default` | Selects container isolation technology (`process`, `hyperv`, `default` on Windows). |
+| `--label` | `list` | *(none)* | Attaches arbitrary OCI/Docker key-value metadata to the compiled image. |
+| `-m`, `--memory` | `bytes` | *(unlimited)* | Hard physical RAM threshold (e.g. `512m`, `2g`) allocated to intermediate steps. |
+| `--memory-swap` | `bytes` | *(unlimited)* | Combined RAM plus swap threshold (`-1` enables unlimited swap). |
+| `--network` | `string` | `default` | Networking mode for `RUN` steps (`default`, `none` for air-gapped, `host`). |
+| `--no-cache` | `boolean` | `false` | Forces Docker to rebuild all layers from scratch, ignoring cached steps. |
+| `--pull` | `boolean` | `false` | Queries the registry to pull newer upstream base image digests before building. |
+| `-q`, `--quiet` | `boolean` | `false` | Suppresses verbose build output and emits only the final image ID on success. |
+| `--rm` | `boolean` | `true` | Removes intermediate containers after a successful build step. |
+| `--security-opt` | `strings` | *(none)* | Applies security profiles such as AppArmor, seccomp, or custom credentials. |
+| `--shm-size` | `bytes` | `64m` | Allocates `/dev/shm` shared memory size (e.g. `256m`, `1g`). |
+| `-t`, `--tag` | `list` | *(none)* | Applies repository name and optional tag in `name:tag` format (repeatable). |
+| `--target` | `string` | *(final)* | Halts build execution upon reaching the designated multi-stage target name. |
+| `--ulimit` | `ulimit` | *(inherited)* | Sets OS resource limits inside build containers (e.g. `nofile=1024:2048`). |
+
+---
+
+## 7. Concrete Examples for Every Build Parameter
+
+Actionable command snippets and operational patterns for every single `docker build` parameter:
+
+### 1. `--add-host` (DNS Mapping Injection)
+
+Inject custom DNS name-to-IP resolutions directly into `/etc/hosts` inside intermediate build containers. Useful for reaching private dependency registries, intranet Git hosts, or local package mirrors without modifying host DNS:
+
+```bash title="Example: --add-host"
+# Resolve internal mirror during build:
+docker build \
+  --add-host "registry.corp.internal:192.168.1.50" \
+  --add-host "git.corp.internal:192.168.1.51" \
+  -t myorg/app:latest .
+```
+
+---
+
+### 2. `--build-arg` (Build-Time Variables)
+
+Pass variables accessible only during build execution to matching `ARG` instructions in the Dockerfile. Build arguments are not persisted into container runtime environment variables unless explicitly mapped via `ENV`:
+
+```bash title="Example: --build-arg"
+# Inject release version, environment, and commit hash at build time:
+docker build \
+  --build-arg NODE_ENV=production \
+  --build-arg APP_VERSION=2.4.0 \
+  --build-arg GIT_COMMIT="$(git rev-parse --short HEAD)" \
+  -t myorg/backend:2.4.0 .
+```
+
+---
+
+### 3. `--cache-from` (Remote Cache Sources)
+
+Specify existing images in a remote registry to query as layer cache candidates. Essential for ephemeral CI/CD agents (GitHub Actions, GitLab CI, AWS CodeBuild) where local runner disk cache is destroyed after each run:
+
+```bash title="Example: --cache-from"
+# Pull remote cache image, use its layers for local build, and update cache tag:
+docker pull myregistry.com/app:cache-latest || true
+docker build \
+  --cache-from myregistry.com/app:cache-latest \
+  -t myregistry.com/app:1.5.0 \
+  -t myregistry.com/app:cache-latest .
+```
+
+---
+
+### 4. `--cgroup-parent` (Hierarchical Cgroup Slices)
+
+Assign intermediate build containers to run within an existing host control group hierarchy for host resource accounting and parent-level quota constraints:
+
+```bash title="Example: --cgroup-parent"
+# Enforce cgroup accounting under a specific systemd slice:
+docker build \
+  --cgroup-parent "ci-runner.slice" \
+  -t myorg/heavy-worker .
+```
+
+---
+
+### 5. `--compress` (Gzip Context Compression)
+
+Compress the local directory context into a gzip archive before streaming it to the Docker daemon. Drastically accelerates build startup when targeting a remote daemon over SSH or WAN:
+
+```bash title="Example: --compress"
+# Compress 500MB context archive before transmitting to remote daemon over TCP:
+docker -H tcp://remote-daemon.internal:2376 build \
+  --compress \
+  -t myorg/analytics-service .
+```
+
+---
+
+### 6. `--cpu-period` (CFS Scheduler Period)
+
+Sets the Linux Completely Fair Scheduler (CFS) period interval in microseconds (default is 100,000 µs = 100ms). Used in conjunction with `--cpu-quota` to govern bandwidth limits:
+
+```bash title="Example: --cpu-period"
+# Set scheduler window to 50ms (50000 µs) with 25ms quota (caps to 50% single-core):
+docker build \
+  --cpu-period 50000 \
+  --cpu-quota 25000 \
+  -t myorg/constrained-app .
+```
+
+---
+
+### 7. `--cpu-quota` (CFS CPU Quota)
+
+Imposes a strict microsecond CPU run time ceiling within each `--cpu-period`. For example, `150000` with the default `100000` period limits the build process to a maximum of 1.5 CPU cores:
+
+```bash title="Example: --cpu-quota"
+# Cap CPU consumption to exactly 2.0 CPU cores (200,000 µs per 100,000 µs period):
+docker build \
+  --cpu-period 100000 \
+  --cpu-quota 200000 \
+  -t myorg/compilation-service .
+```
+
+---
+
+### 8. `-c, --cpu-shares` (Proportional CPU Weight)
+
+Sets the relative priority weight of intermediate build processes during host CPU contention (default is 1024). A container with 512 shares receives half the CPU cycles of a 1024-share process when host CPU is 100% saturated:
+
+```bash title="Example: -c, --cpu-shares"
+# Run background low-priority build without stalling critical host services:
+docker build \
+  -c 512 \
+  -t myorg/background-crawler .
+```
+
+---
+
+### 9. `--cpuset-cpus` (CPU Core Affinity)
+
+Pins build execution to specific CPU cores. Useful on multi-core servers to isolate build tasks away from production workload cores:
+
+```bash title="Example: --cpuset-cpus"
+# Restrict build compilation strictly to logical cores 0, 1, 2, and 3:
+docker build \
+  --cpuset-cpus "0-3" \
+  -t myorg/rust-builder .
+```
+
+---
+
+### 10. `--cpuset-mems` (NUMA Memory Node Binding)
+
+Restricts memory allocations to specific Non-Uniform Memory Access (NUMA) memory nodes on multi-socket server hardware:
+
+```bash title="Example: --cpuset-mems"
+# Pin memory allocation to NUMA node 0:
+docker build \
+  --cpuset-cpus "0-7" \
+  --cpuset-mems "0" \
+  -t myorg/numa-optimized-app .
+```
+
+---
+
+### 11. `--disable-content-trust` (Notary Image Signatures)
+
+By default, Docker skips cryptographic image signature validation (`--disable-content-trust=true`). Setting this flag to `false` enforces that upstream base images (`FROM ...`) must have verified digital signatures signed in Notary:
+
+```bash title="Example: --disable-content-trust"
+# Mandate signed official base images in zero-trust environments:
+docker build \
+  --disable-content-trust=false \
+  -t enterprise-app:secure .
+```
+
+---
+
+### 12. `-f, --file` (Custom Dockerfile Path)
+
+Points to a Dockerfile located outside the build root or using a non-standard filename (e.g. `Dockerfile.prod`, `Dockerfile.arm64`):
+
+```bash title="Example: -f, --file"
+# Build using production Dockerfile located in nested deployment directory:
+docker build \
+  -f deploy/docker/Dockerfile.production \
+  -t myorg/web-service:prod .
+```
+
+---
+
+### 13. `--force-rm` (Always Purge Intermediate Containers)
+
+Ensures that intermediate containers created during `RUN` instructions are automatically cleaned up even if a build instruction fails:
+
+```bash title="Example: --force-rm"
+# Prevent CI runners from leaking failed intermediate containers onto host disk:
+docker build \
+  --force-rm \
+  -t test-app:ci .
+```
+
+---
+
+### 14. `--iidfile` (Output Image Digest to File)
+
+Writes the final resulting image SHA-256 digest string into a specified text file upon successful build completion. Eliminates fragile stdout parsing in automated deployment scripts:
+
+```bash title="Example: --iidfile"
+# Write cryptographic digest to file for downstream deployment or vulnerability scans:
+docker build \
+  -q \
+  --iidfile ./dist/image-digest.txt \
+  -t myorg/api:1.0 .
+
+# Read digest in subsequent CI/CD pipeline step:
+IMAGE_SHA=$(cat ./dist/image-digest.txt)
+echo "Deploying verified image hash: $IMAGE_SHA"
+```
+
+---
+
+### 15. `--isolation` (Container Isolation Technology)
+
+Selects the container virtualization isolation model on Windows hosts (`process`, `hyperv`, or `default`):
+
+```bash title="Example: --isolation"
+# Build Windows container using process-level isolation:
+docker build \
+  --isolation=process \
+  -t win-service:latest .
+```
+
+---
+
+### 16. `--label` (OCI Metadata Schema)
+
+Attaches key-value schema metadata directly to the image manifest. Commonly used for traceability (Git commits, maintainer, documentation URLs):
+
+```bash title="Example: --label"
+# Embed OpenContainers metadata:
+docker build \
+  --label "org.opencontainers.image.title=Payment Gateway API" \
+  --label "org.opencontainers.image.version=1.4.0" \
+  --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
+  --label "org.opencontainers.image.vendor=Acme Corp" \
+  -t payment-api:1.4.0 .
+```
+
+---
+
+### 17. `-m, --memory` (Hard RAM Ceiling)
+
+Enforces a hard physical RAM boundary on intermediate containers during build steps to prevent the host Linux kernel OOM killer from terminating daemon services:
+
+```bash title="Example: -m, --memory"
+# Limit build memory usage to 2 Gigabytes:
+docker build \
+  -m 2g \
+  -t memory-safe-app .
+```
+
+---
+
+### 18. `--memory-swap` (RAM + Swap Total Boundary)
+
+Sets the aggregate allowable memory (RAM plus Swap). When `-m 1g` and `--memory-swap 2g` are configured, the build can use 1GB physical RAM and 1GB swap. Passing `-1` permits unlimited swap:
+
+```bash title="Example: --memory-swap"
+# Configure 1GB physical memory with 2GB total combined swap boundary:
+docker build \
+  -m 1g \
+  --memory-swap 2g \
+  -t swapped-compiler .
+```
+
+---
+
+### 19. `--network` (Build Networking Isolation)
+
+Controls network access during Dockerfile `RUN` steps:
+- `default`: Normal bridge network with outbound internet connectivity.
+- `none`: Completely air-gapped; no network access during compilation.
+- `host`: Shares the host network namespace directly.
+
+```bash title="Example: --network"
+# Air-gapped secure build: all dependencies must be pre-copied into context:
+docker build \
+  --network none \
+  -t airgapped-app .
+```
+
+---
+
+### 20. `--no-cache` (Force Rebuild From Scratch)
+
+Bypasses all cached layers from previous builds, forcing every single Dockerfile instruction to execute freshly. Recommended for scheduled security rebuilds to pull latest OS patches:
+
+```bash title="Example: --no-cache"
+# Recompile everything from scratch:
+docker build \
+  --no-cache \
+  -t myorg/app:fresh-build .
+```
+
+---
+
+### 21. `--pull` (Force Upstream Base Image Check)
+
+Forces Docker to contact the remote registry and check if an updated digest exists for the base image (`FROM node:20-alpine`) before evaluating local cache:
+
+```bash title="Example: --pull"
+# Always pull updated patch releases of base images:
+docker build \
+  --pull \
+  -t myorg/app:latest .
+```
+
+---
+
+### 22. `-q, --quiet` (Silent Build)
+
+Suppresses verbose step-by-step stdout streaming, outputting strictly the final image ID string upon build completion:
+
+```bash title="Example: -q, --quiet"
+# Build silently and capture image ID directly into a bash variable:
+IMAGE_ID=$(docker build -q -t app:latest .)
+echo "Successfully compiled image: $IMAGE_ID"
+```
+
+---
+
+### 23. `--rm` (Intermediate Container Cleanup)
+
+By default (`--rm=true`), successful builds delete intermediate containers. Passing `--rm=false` preserves intermediate containers upon build failure, allowing engineers to inspect the exact failure state:
+
+```bash title="Example: --rm"
+# Preserve intermediate state to debug a failing RUN step:
+docker build \
+  --rm=false \
+  -t failing-app .
+
+# Inspect the last failed container:
+FAILED_CONTAINER=$(docker ps -a -l -q)
+docker commit "$FAILED_CONTAINER" debug-snapshot
+docker run -it --rm debug-snapshot sh
+```
+
+---
+
+### 24. `--security-opt` (Kernel Security Profiles)
+
+Overrides default kernel sandboxing controls (AppArmor, Seccomp, SELinux) during intermediate build execution:
+
+```bash title="Example: --security-opt"
+# Disable default seccomp filter for low-level compilers requiring ptrace:
+docker build \
+  --security-opt seccomp=unconfined \
+  -t lowlevel-debugger .
+```
+
+---
+
+### 25. `--shm-size` (Shared Memory Partition Size)
+
+Allocates the size of `/dev/shm` shared memory (default is 64MB). Prevents `SIGBUS` memory crashes in headless browsers (Puppeteer, Playwright), Webpack, or parallel GCC compilations:
+
+```bash title="Example: --shm-size"
+# Allocate 512 Megabytes of shared memory for headless browser testing:
+docker build \
+  --shm-size 512m \
+  -t e2e-test-runner .
+```
+
+---
+
+### 26. `-t, --tag` (Repository Naming & Versioning)
+
+Applies a repository name and tag in `name:tag` format. Can be specified multiple times to assign semantic versioning and `latest` in a single build command:
+
+```bash title="Example: -t, --tag"
+# Assign semantic release tag and latest tag simultaneously:
+docker build \
+  -t myorg/web-service:1.4.2 \
+  -t myorg/web-service:1.4 \
+  -t myorg/web-service:latest \
+  .
+```
+
+---
+
+### 27. `--target` (Multi-Stage Target Isolation)
+
+Stops build execution after building a designated stage name in a multi-stage Dockerfile. Useful in CI pipelines to build test stages without generating heavy release artifacts:
+
+```bash title="Example: --target"
+# Build only up to the 'test' stage in multi-stage Dockerfile:
+docker build \
+  --target test \
+  -t myorg/app:test-suite .
+
+# Run test suite container:
+docker run --rm myorg/app:test-suite npm test
+```
+
+---
+
+### 28. `--ulimit` (POSIX Resource Ceilings)
+
+Configures OS resource ceilings (file descriptors, process counts, core dumps) inside intermediate build containers:
+
+```bash title="Example: --ulimit"
+# Expand open file descriptors ceiling (soft:hard) for parallel asset bundlers:
+docker build \
+  --ulimit nofile=2048:4096 \
+  --ulimit nproc=1024:2048 \
+  -t asset-compiler .
 ```

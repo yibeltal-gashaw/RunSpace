@@ -1,0 +1,117 @@
+---
+title: Storage Volumes & Networking
+description: Complete CLI reference for Docker volume lifecycle, persistent state backups, custom bridge networks, DNS resolution, and multi-host overlays.
+icon: Network
+---
+
+Comprehensive operational guide covering all Docker persistent storage and networking commands: `volume` (`create`, `ls`, `inspect`, `rm`, `prune`) and `network` (`create`, `ls`, `inspect`, `connect`, `disconnect`, `rm`, `prune`).
+
+---
+
+## 1. Docker Volume Management (`volume`)
+
+Docker volumes are managed storage entities outside the root filesystem of the host kernel, providing optimal I/O performance without write-amplification overhead.
+
+```bash title="Volume Lifecycle Operations"
+# Create a named volume with custom labels:
+docker volume create \
+  --label environment=production \
+  --label backup_frequency=daily \
+  pg_data
+
+# List all volumes:
+docker volume ls
+
+# Find dangling volumes not attached to any container:
+docker volume ls -f "dangling=true"
+
+# Inspect volume host mountpoint path (/var/lib/docker/volumes/.../_data):
+docker volume inspect pg_data --format '{{.Mountpoint}}'
+
+# Delete an unattached volume:
+docker volume rm pg_data
+
+# Purge all unused volumes (Warning: destroys unmounted state):
+docker volume prune -f
+```
+
+```bash title="Mounting Volumes into Containers"
+# Mount using legacy -v flag:
+docker run -d --name db -v pg_data:/var/lib/postgresql/data postgres:16-alpine
+
+# Mount using modern explicit --mount syntax (read-only mode enabled):
+docker run -d --name web \
+  --mount type=volume,source=nginx_logs,target=/var/log/nginx,readonly=false \
+  --mount type=bind,source=/etc/ssl/certs,target=/etc/ssl/certs,readonly=true \
+  nginx:alpine
+
+# Memory-only tmpfs mount (never written to host disk; ideal for secrets):
+docker run -d --tmpfs /tmp:rw,noexec,nosuid,size=64m redis:alpine
+```
+
+```bash title="Volume Backup & Restore Recipes"
+# Backup volume contents into a gzipped tar archive on current host directory:
+docker run --rm \
+  -v pg_data:/source:ro \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/pg_data_backup_$(date +%F).tar.gz -C /source .
+
+# Restore archive contents into a newly created volume:
+docker volume create pg_data_restored
+docker run --rm \
+  -v pg_data_restored:/target \
+  -v $(pwd):/backup \
+  alpine tar xzf /backup/pg_data_backup_2026-11-25.tar.gz -C /target
+```
+
+---
+
+## 2. Docker Network Management (`network`)
+
+Docker provides built-in network drivers:
+- **`bridge`**: Default isolated software bridge for containers on a single host. User-defined bridges provide automatic DNS name resolution between containers.
+- **`host`**: Bypasses network isolation and maps container ports directly to host interfaces (lowest latency).
+- **`none`**: Fully isolated loopback-only network (ideal for batch compute tasks).
+- **`overlay`**: Multi-host distributed network across Docker Swarm nodes with VXLAN encapsulation.
+- **`macvlan` / `ipvlan`**: Assigns physical MAC or IP addresses from the host physical network.
+
+```bash title="Create Custom User-Defined Networks"
+# Create custom bridge network with specified CIDR subnet and gateway:
+docker network create \
+  --driver bridge \
+  --subnet 172.28.0.0/16 \
+  --ip-range 172.28.5.0/24 \
+  --gateway 172.28.0.1 \
+  --opt "com.docker.network.bridge.name"="br-app" \
+  app-network
+
+# Create internal isolated network without public internet egress:
+docker network create --driver bridge --internal secure-backend-net
+```
+
+```bash title="Connecting Containers & DNS Discovery"
+# Launch container attached to the custom bridge network:
+# Containers on the same custom bridge resolve each other by container name (DNS):
+docker run -d --name redis-cache --network app-network redis:alpine
+docker run -d --name api-service --network app-network -e REDIS_HOST=redis-cache my-api
+
+# Connect an already-running container to a second network on the fly:
+docker network connect --ip 172.28.5.42 app-network legacy-container
+
+# Disconnect container from network:
+docker network disconnect app-network legacy-container
+```
+
+```bash title="Network Inspection & Pruning"
+# Inspect all connected containers and their allocated IP addresses:
+docker network inspect app-network --format '{{range .Containers}}{{.Name}} => {{.IPv4Address}}{{"\n"}}{{end}}'
+
+# List all networks with driver type:
+docker network ls
+
+# Remove network:
+docker network rm app-network
+
+# Prune all unused networks not occupied by running containers:
+docker network prune -f
+```

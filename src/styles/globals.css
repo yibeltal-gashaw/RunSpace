@@ -266,3 +266,41 @@ div[role="dialog"] a[data-active="false"] {
   color: var(--color-fd-muted-foreground) !important;
   background-color: transparent !important;
 }
+
+/* Mobile view */
+#nd-sidebar-mobile {
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  left: 0 !important;
+  right: auto !important;
+  border-inline-start-width: 0 !important;
+  border-inline-end-width: 1px !important;
+  border-left-width: 0 !important;
+  border-right-width: 1px !important;
+  --fd-sidebar-drawer-offset: -100% !important;
+  box-shadow: 10px 0 25px -5px rgba(0, 0, 0, 0.1), 8px 0 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+[dir="rtl"] #nd-sidebar-mobile {
+  inset-inline-start: auto !important;
+  inset-inline-end: 0 !important;
+  left: auto !important;
+  right: 0 !important;
+  border-inline-start-width: 1px !important;
+  border-inline-end-width: 0 !important;
+  border-left-width: 1px !important;
+  border-right-width: 0 !important;
+  --fd-sidebar-drawer-offset: 100% !important;
+  box-shadow: -10px 0 25px -5px rgba(0, 0, 0, 0.1), -8px 0 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Mobile view: top navbar sidebar toggle button on left side */
+#nd-subnav {
+  padding-inline-start: 0.75rem !important;
+}
+
+#nd-subnav button[aria-controls="nd-sidebar-mobile"] {
+  order: -1 !important;
+  margin-inline-end: 0.5rem !important;
+}
+
